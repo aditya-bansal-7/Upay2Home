@@ -46,7 +46,7 @@ export default function AdminLayout({
         }`}
       >
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-foreground">DonePay Admin</h1>
+          <h1 className="text-2xl font-bold text-foreground">Upay2Home Admin</h1>
         </div>
         <nav className="space-y-2 px-4">
           {navItems.map((item) => {

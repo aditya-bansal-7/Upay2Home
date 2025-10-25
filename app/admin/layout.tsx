@@ -7,12 +7,11 @@ import { LayoutDashboard, Users, LogOut, Settings, Gift, CreditCard, Menu, X } f
 import { useState } from "react"
 import { requireAdmin } from "@/lib/auth"
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  await requireAdmin();
 
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)

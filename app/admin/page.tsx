@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState, useRef } from "react"
 import {
   LineChart,
   Line,
@@ -15,48 +16,190 @@ import {
 } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, CreditCard, TrendingUp, AlertCircle } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
-const dashboardStats = [
-  { label: "Total Users", value: "12,543", icon: Users, change: "+12.5%" },
-  { label: "Total Deposits", value: "$2.4M", icon: CreditCard, change: "+8.2%" },
-  { label: "Active Users", value: "3,421", icon: TrendingUp, change: "+5.1%" },
-  { label: "Pending Withdrawals", value: "234", icon: AlertCircle, change: "-2.3%" },
-]
+const statIcons = [Users, CreditCard, TrendingUp, AlertCircle]
 
-const revenueData = [
-  { month: "Jan", revenue: 45000, users: 2400 },
-  { month: "Feb", revenue: 52000, users: 2210 },
-  { month: "Mar", revenue: 48000, users: 2290 },
-  { month: "Apr", revenue: 61000, users: 2000 },
-  { month: "May", revenue: 55000, users: 2181 },
-  { month: "Jun", revenue: 67000, users: 2500 },
-]
+// Static content that doesn't need API data
+const PAGE_TITLE = "Dashboard"
+const PAGE_DESCRIPTION = "Welcome back! Here's your platform overview."
+const CHART_TITLE = "Revenue & Users"
+const CHART_DESCRIPTION = "Monthly revenue and user growth"
+const USER_STATUS_TITLE = "User Status"
+const USER_STATUS_DESCRIPTION = "Distribution of users"
+const TRANSACTIONS_TITLE = "Recent Transactions"
+const TRANSACTIONS_DESCRIPTION = "Latest platform transactions"
 
-const userDistribution = [
-  { name: "Active", value: 65, color: "#000000" },
-  { name: "Inactive", value: 25, color: "#d4d4d8" },
-  { name: "Suspended", value: 10, color: "#ef4444" },
-]
-
-const recentTransactions = [
-  { id: 1, user: "John Doe", type: "Deposit", amount: "$500", status: "Completed", date: "2024-01-15" },
-  { id: 2, user: "Jane Smith", type: "Withdrawal", amount: "$1,200", status: "Pending", date: "2024-01-14" },
-  { id: 3, user: "Mike Johnson", type: "Deposit", amount: "$750", status: "Completed", date: "2024-01-13" },
-  { id: 4, user: "Sarah Williams", type: "Withdrawal", amount: "$2,000", status: "Failed", date: "2024-01-12" },
-  { id: 5, user: "Tom Brown", type: "Deposit", amount: "$300", status: "Completed", date: "2024-01-11" },
-]
+// tiny CountUp component (no deps)
+function CountUp({ value, formatter = (v: number) => v.toLocaleString() }: { value: number; formatter?: (v:number)=>string }) {
+  const [display, setDisplay] = useState(0)
+  const rafRef = useRef<number | null>(null)
+  useEffect(() => {
+    const start = performance.now()
+    const from = display
+    const to = value
+    const duration = 700
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration)
+      const eased = t // linear
+      const current = Math.round(from + (to - from) * eased)
+      setDisplay(current)
+      if (t < 1) rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+  return <>{formatter(display)}</>
+}
 
 export default function AdminDashboard() {
-  return (
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState<any[]>([])
+  const [revenueData, setRevenueData] = useState<any[]>([])
+  const [distribution, setDistribution] = useState<any[]>([])
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([])
+
+  useEffect(() => {
+    let mounted = true
+    let iv: number | undefined
+
+    async function fetchAll() {
+      setLoading(true)
+      setError(null)
+      try {
+        const [sRes, rRes, dRes, tRes] = await Promise.all([
+          fetch("/api/admin/dashboard/stats"),
+          fetch("/api/admin/dashboard/revenue"),
+          fetch("/api/admin/dashboard/distribution"),
+          fetch("/api/admin/dashboard/transactions"),
+        ])
+        if (!sRes.ok || !rRes.ok || !dRes.ok || !tRes.ok) throw new Error("Failed to load one or more endpoints")
+        const sJson = await sRes.json()
+        const rJson = await rRes.json()
+        const dJson = await dRes.json()
+        const tJson = await tRes.json()
+        if (!mounted) return
+        setStats(sJson.stats || [])
+        setRevenueData(rJson.revenueData || [])
+        setDistribution(dJson.distribution || [])
+        setRecentTransactions(tJson.recentTransactions || [])
+      } catch (err: any) {
+        if (!mounted) return
+        setError(err?.message ?? "Failed to load dashboard")
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    fetchAll()
+  }, [])
+
+  // Separate loading UI into components for better organization
+  const LoadingSkeleton = () => (
     <div className="space-y-8">
+      {/* Header is static, no need for skeleton */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-sm md:text-base text-muted-foreground">Welcome back! Here's your platform overview.</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">{PAGE_TITLE}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{PAGE_DESCRIPTION}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
-        {dashboardStats.map((stat, index) => {
-          const Icon = stat.icon
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Skeleton className="h-4 w-[100px]" />
+              <Skeleton className="h-4 w-4 rounded-full" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-[120px] mb-2" />
+              <Skeleton className="h-3 w-[140px]" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>{CHART_TITLE}</CardTitle>
+            <CardDescription>{CHART_DESCRIPTION}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[250px] w-full" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{USER_STATUS_TITLE}</CardTitle>
+            <CardDescription>{USER_STATUS_DESCRIPTION}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[250px] w-full rounded-lg" />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{TRANSACTIONS_TITLE}</CardTitle>
+          <CardDescription>{TRANSACTIONS_DESCRIPTION}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex gap-4">
+                <Skeleton className="h-6 w-[120px]" />
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-[100px]" />
+                <Skeleton className="h-6 w-[90px]" />
+                <Skeleton className="h-6 w-[100px]" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+
+  if (loading) return <LoadingSkeleton />
+  if (error) {
+    return (
+      <div className="space-y-8">
+        {/* Keep static header even in error state */}
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">{PAGE_TITLE}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">{PAGE_DESCRIPTION}</p>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center text-red-600">
+            <p>Error: {error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-red-100 text-red-800 rounded-md hover:bg-red-200"
+            >
+              Retry
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Static header */}
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">{PAGE_TITLE}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{PAGE_DESCRIPTION}</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
+        {stats.map((stat, index) => {
+          const Icon = statIcons[index] || Users
           return (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -64,8 +207,12 @@ export default function AdminDashboard() {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-xl md:text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">{stat.change} from last month</p>
+                <div className="text-xl md:text-2xl font-bold">
+                  <CountUp value={typeof stat.value === "number" ? stat.value : 0} formatter={(v)=> typeof stat.value === "number" && String(stat.value).startsWith("$") ? `$${v.toLocaleString()}` : stat.valueFormatted ?? v.toLocaleString()} />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {stat.change} from last month
+                </p>
               </CardContent>
             </Card>
           )
@@ -86,7 +233,7 @@ export default function AdminDashboard() {
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="revenue" stroke="#000000" name="Revenue ($)" />
+                <Line type="monotone" dataKey="revenue" stroke="#000000" name="Revenue (INR)" />
                 <Line type="monotone" dataKey="users" stroke="#a1a1a1" name="New Users" />
               </LineChart>
             </ResponsiveContainer>
@@ -102,7 +249,7 @@ export default function AdminDashboard() {
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
-                  data={userDistribution}
+                  data={distribution}
                   cx="50%"
                   cy="50%"
                   innerRadius={40}
@@ -110,7 +257,7 @@ export default function AdminDashboard() {
                   paddingAngle={2}
                   dataKey="value"
                 >
-                  {userDistribution.map((entry, index) => (
+                  {distribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -139,7 +286,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentTransactions.map((tx) => (
+                {recentTransactions.map((tx: any) => (
                   <tr key={tx.id} className="border-b border-border hover:bg-secondary transition-colors">
                     <td className="py-3 px-2 md:px-4">{tx.user}</td>
                     <td className="py-3 px-2 md:px-4">{tx.type}</td>
@@ -147,9 +294,9 @@ export default function AdminDashboard() {
                     <td className="py-3 px-2 md:px-4">
                       <span
                         className={`inline-block px-2 md:px-3 py-1 rounded-full text-xs font-semibold ${
-                          tx.status === "Completed"
+                          tx.status === "COMPLETED" || tx.status === "Completed"
                             ? "bg-green-100 text-green-800"
-                            : tx.status === "Pending"
+                            : tx.status === "PENDING" || tx.status === "Pending"
                               ? "bg-yellow-100 text-yellow-800"
                               : "bg-red-100 text-red-800"
                         }`}

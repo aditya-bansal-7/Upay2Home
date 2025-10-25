@@ -44,7 +44,7 @@ export function ProfileSection() {
       const res = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ name, id: session.user?.userId }),
       })
       if (res.ok) {
         setIsEditing(false)
@@ -116,7 +116,7 @@ export function ProfileSection() {
       )}
 
       {/* Quota Section */}
-      <div className="bg-card rounded-lg p-6 border border-border">
+      {/* <div className="bg-card rounded-lg p-6 border border-border">
         <div className="flex items-baseline gap-2 mb-2">
           <span className="text-4xl font-bold text-foreground">0</span>
           <span className="text-lg text-foreground">INR</span>
@@ -125,7 +125,7 @@ export function ProfileSection() {
         <button className="bg-foreground text-background px-6 py-2 rounded-full font-medium text-sm hover:opacity-90 transition-opacity">
           {tAny.topUp ?? "Top Up"}
         </button>
-      </div>
+      </div> */}
     </div>
   )
 }

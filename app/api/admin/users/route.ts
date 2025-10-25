@@ -17,6 +17,8 @@ export const GET = adminProtectedRequest(async (req: NextRequest) => {
         OR: [
           { name: { contains: search, mode: "insensitive" as const } },
           { email: { contains: search, mode: "insensitive" as const } },
+          { userId: { contains: search, mode: "insensitive" as const } },
+          { phone: { contains: search, mode: "insensitive" as const } },
         ],
       } : {},
       status !== "All" ? {
@@ -34,14 +36,16 @@ export const GET = adminProtectedRequest(async (req: NextRequest) => {
         name: true,
         email: true,
         userId: true,
+        phone: true,
         isBlocked: true,
         role: true,
         usdtBalance: true,
         inrBalance: true,
+        kycVerified: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
-      skip: (page - 1) * ITEMS_PER_PAGE,
+      skip: (Math.max(1, page) - 1) * ITEMS_PER_PAGE,
       take: ITEMS_PER_PAGE,
     }),
     db.user.count({ where }),
@@ -49,8 +53,8 @@ export const GET = adminProtectedRequest(async (req: NextRequest) => {
 
   const res = NextResponse.json({
     users,
-    totalPages: Math.ceil(total / ITEMS_PER_PAGE),
-    currentPage: page,
+    totalPages: Math.max(1, Math.ceil(total / ITEMS_PER_PAGE)),
+    currentPage: Math.max(1, page),
     total,
   });
   res.headers.set("Cache-Control", "no-store");

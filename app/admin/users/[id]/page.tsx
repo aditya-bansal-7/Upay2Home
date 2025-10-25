@@ -1,52 +1,159 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
 import { ArrowLeft, Copy } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
-const userDetails = {
-  id: 1,
-  name: "John Doe",
-  email: "john@example.com",
-  phone: "+91 9876543210",
-  status: "Active",
-  joinDate: "2024-01-01",
-  balance: "$1,250",
-  totalDeposits: "$5,000",
-  totalWithdrawals: "$3,750",
-  referralCode: "JOHN123456",
-  referralCount: 12,
-}
-
-const wallets = [
-  {
-    id: 1,
-    type: "USDT",
-    address: "0x742d35Cc6634C0532925a3b844Bc9e7595f42e...",
-    balance: "$1,250",
-    network: "Ethereum",
-  },
-  { id: 2, type: "USDT", address: "0x8f3Cf7ad23Cd3CaDbD9735AFF958023D60c42C...", balance: "$0", network: "Polygon" },
-]
-
-const transactions = [
-  { id: 1, type: "Deposit", amount: "$500", date: "2024-01-15", status: "Completed", txHash: "0x123abc..." },
-  { id: 2, type: "Withdrawal", amount: "$200", date: "2024-01-14", status: "Completed", txHash: "0x456def..." },
-  { id: 3, type: "Deposit", amount: "$750", date: "2024-01-13", status: "Completed", txHash: "0x789ghi..." },
-  { id: 4, type: "Withdrawal", amount: "$300", date: "2024-01-12", status: "Pending", txHash: "0xabc123..." },
-]
-
-const activityData = [
-  { date: "Jan 1", deposits: 500, withdrawals: 0 },
-  { date: "Jan 5", deposits: 750, withdrawals: 200 },
-  { date: "Jan 10", deposits: 1000, withdrawals: 300 },
-  { date: "Jan 15", deposits: 500, withdrawals: 200 },
-]
-
-export default function UserDetailsPage({ params }: { params: { id: string } }) {
+export default function UserDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const id = params?.id as string
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+  const [actionLoading, setActionLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  // New: transactions state
+  const [txs, setTxs] = useState<any[]>([])
+  const [txsLoading, setTxsLoading] = useState(true)
+  const [txsPage, setTxsPage] = useState(1)
+  const [txsTotalPages, setTxsTotalPages] = useState(1)
+  const [txsPageSize] = useState(5)
+
+  // New: activity aggregation state
+  const [activityData, setActivityData] = useState<any[]>([])
+  const [activityLoading, setActivityLoading] = useState(true)
+
+  useEffect(() => {
+    if (!id) return
+    let mounted = true
+    async function fetchUser() {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/admin/users/${id}`)
+        if (!res.ok) throw new Error("Failed to load user")
+        const json = await res.json()
+        if (!mounted) return
+        setUser(json.user)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+    fetchUser()
+    return () => { mounted = false }
+  }, [id])
+
+  // Fetch transactions
+  useEffect(() => {
+    if (!id) return
+    let mounted = true
+    async function fetchTxs() {
+      setTxsLoading(true)
+      try {
+        const params = new URLSearchParams({ page: String(txsPage), pageSize: String(txsPageSize) })
+        const res = await fetch(`/api/admin/users/${id}/transactions?${params.toString()}`)
+        if (!res.ok) throw new Error("Failed to fetch transactions")
+        const json = await res.json()
+        if (!mounted) return
+        setTxs(json.items || [])
+        setTxsTotalPages(json.totalPages || 1)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        if (mounted) setTxsLoading(false)
+      }
+    }
+    fetchTxs()
+    return () => { mounted = false }
+  }, [id, txsPage, txsPageSize])
+
+  // New: fetch recent transactions (larger page) and aggregate by day for activity chart
+  useEffect(() => {
+    if (!id) return
+    let mounted = true
+    async function fetchActivity() {
+      setActivityLoading(true)
+      try {
+        const params = new URLSearchParams({ page: "1", pageSize: "100" })
+        const res = await fetch(`/api/admin/users/${id}/transactions?${params.toString()}`)
+        if (!res.ok) throw new Error("Failed to fetch activity transactions")
+        const json = await res.json()
+        if (!mounted) return
+        const items: any[] = json.items || []
+
+        // Aggregate by date (YYYY-MM-DD), separate deposits (CONVERT) and withdrawals (WITHDRAW)
+        const map = new Map<string, { date: string; deposits: number; withdrawals: number }>()
+        items.forEach((tx: any) => {
+          const dateKey = new Date(tx.createdAt).toISOString().slice(0, 10)
+          if (!map.has(dateKey)) map.set(dateKey, { date: dateKey, deposits: 0, withdrawals: 0 })
+          const entry = map.get(dateKey)!
+          const amount = Number(tx.inrAmount ?? 0)
+          if (tx.type === "CONVERT") entry.deposits += amount
+          else if (tx.type === "WITHDRAW") entry.withdrawals += amount
+        })
+
+        // Turn into sorted array (ascending by date) and keep last 10 days
+        const arr = Array.from(map.values())
+          .sort((a, b) => a.date.localeCompare(b.date))
+        const last = arr.slice(-10).map((d) => ({
+          date: new Date(d.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+          deposits: d.deposits,
+          withdrawals: d.withdrawals,
+        }))
+
+        setActivityData(last)
+      } catch (err) {
+        console.error(err)
+        setActivityData([])
+      } finally {
+        if (mounted) setActivityLoading(false)
+      }
+    }
+    fetchActivity()
+    return () => { mounted = false }
+  }, [id])
+
+  async function toggleBlock(block: boolean) {
+    if (!id) return
+    setActionLoading(true)
+    try {
+      await fetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: block ? "block" : "unblock" }),
+      })
+      // reload data
+      const res = await fetch(`/api/admin/users/${id}`)
+      if (res.ok) {
+        const json = await res.json()
+        setUser(json.user)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  async function softDelete() {
+    if (!confirm("Delete user (soft delete)?")) return
+    if (!id) return
+    setActionLoading(true)
+    try {
+      await fetch(`/api/admin/users/${id}`, { method: "DELETE" })
+      router.push("/admin/users")
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -54,91 +161,108 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
     setTimeout(() => setCopied(false), 2000)
   }
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-60" />
+            <Skeleton className="h-4 w-96 mt-2" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-28" />
+            <Skeleton className="h-10 w-28" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent>
+              <Skeleton className="h-10 w-full mb-2" />
+              <Skeleton className="h-6 w-full" />
+            </CardContent>
+          </Card>
+          <Card className="md:col-span-2">
+            <CardContent>
+              <Skeleton className="h-48 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <div className="p-6">User not found</div>
+  }
+
   return (
     <div className="space-y-6">
-      <Link href="/admin/users" className="flex items-center gap-2 text-primary hover:underline">
-        <ArrowLeft className="h-4 w-4" />
-        Back to Users
-      </Link>
-
-      {/* User Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{userDetails.name}</h1>
-          <p className="text-muted-foreground">{userDetails.email}</p>
+          <h1 className="text-2xl font-bold">{user.name ?? "—"}</h1>
+          <p className="text-sm text-muted-foreground">{user.email ?? "—"}</p>
         </div>
-        <span className="inline-block px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-          {userDetails.status}
-        </span>
+        <div className="flex gap-2">
+          <button onClick={() => toggleBlock(!user.isBlocked)} className="px-3 py-2 bg-foreground text-background rounded">
+            {user.isBlocked ? "Unblock" : "Block"}
+          </button>
+          <button onClick={softDelete} className="px-3 py-2 bg-red-100 text-red-800 rounded">Delete</button>
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Current Balance</CardTitle>
+          <CardHeader>
+            <CardTitle>Profile</CardTitle>
+            <CardDescription>Basic info</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userDetails.balance}</div>
+            <p><strong>User ID:</strong> {user.userId ?? "—"}</p>
+            <p><strong>Email:</strong> {user.email ?? "—"}</p>
+            {/* <p><strong>KYC:</strong> {user.kycVerified ? "Verified" : "Not verified"}</p> */}
+            <p><strong>INR Balance:</strong> ₹{Number(user.inrBalance ?? 0).toLocaleString()}</p>
+            <p><strong>USDT Balance:</strong> {Number(user.usdtBalance ?? 0).toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-2">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Deposits</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{userDetails.totalDeposits}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Withdrawals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{userDetails.totalWithdrawals}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Referrals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{userDetails.referralCount}</div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Wallets */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Wallets</CardTitle>
-          <CardDescription>User's connected wallets</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {wallets.map((wallet) => (
-              <div key={wallet.id} className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div className="flex-1">
-                  <div className="font-semibold">
-                    {wallet.type} - {wallet.network}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Payout Profiles</CardTitle>
+            <CardDescription>UPI / Bank profiles for this user</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {Array.isArray(user.payoutProfiles) && user.payoutProfiles.length > 0 ? (
+              <div className="space-y-3">
+                {user.payoutProfiles.map((p: any) => (
+                  <div key={p.id} className="border border-border rounded p-3">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="font-medium">{p.type} {p.isActive ? "(Active)" : "(Inactive)"}</p>
+                        <p className="text-sm text-muted-foreground">{p.verified ? "Verified" : "Not verified"}</p>
+                      </div>
+                      <div className="text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</div>
+                    </div>
+                    {p.type === "UPI" ? (
+                      <p className="mt-2"><strong>VPA:</strong> {p.upiVpa ?? "—"}</p>
+                    ) : (
+                      <>
+                        <p className="mt-2"><strong>Account:</strong> {p.accountNumber ?? "—"}</p>
+                        <p className="text-sm"><strong>IFSC:</strong> {p.ifsc ?? "—"}</p>
+                        <p className="text-sm"><strong>Bank:</strong> {p.bankName ?? "—"}</p>
+                      </>
+                    )}
+                    {p.verificationNote && <p className="mt-2 text-sm text-muted-foreground">{p.verificationNote}</p>}
                   </div>
-                  <div className="text-sm text-muted-foreground font-mono">{wallet.address}</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold">{wallet.balance}</div>
-                  <button
-                    onClick={() => copyToClipboard(wallet.address)}
-                    className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
-                  >
-                    <Copy className="h-3 w-3" />
-                    {copied ? "Copied" : "Copy"}
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            ) : (
+              <div className="text-sm text-muted-foreground">No payout profiles found for this user.</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Activity Chart */}
       <Card>
@@ -147,66 +271,129 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
           <CardDescription>Deposit and withdrawal history</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={activityData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="deposits" stroke="#000000" name="Deposits" />
-              <Line type="monotone" dataKey="withdrawals" stroke="#a1a1a1" name="Withdrawals" />
-            </LineChart>
-          </ResponsiveContainer>
+          {activityLoading ? (
+            <div className="h-72 flex items-center justify-center">
+              <Skeleton className="h-56 w-full" />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={activityData.length ? activityData : [{ date: "", deposits: 0, withdrawals: 0 }]}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="deposits" stroke="#000000" name="Deposits (INR)" />
+                <Line type="monotone" dataKey="withdrawals" stroke="#a1a1a1" name="Withdrawals (INR)" />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
 
-      {/* Transactions */}
+      {/* Transactions Section */}
       <Card>
         <CardHeader>
           <CardTitle>Transactions</CardTitle>
-          <CardDescription>Recent transactions</CardDescription>
+          <CardDescription>INR transactions for this user</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 font-semibold">Type</th>
-                  <th className="text-left py-3 px-4 font-semibold">Amount</th>
-                  <th className="text-left py-3 px-4 font-semibold">Date</th>
-                  <th className="text-left py-3 px-4 font-semibold">Status</th>
-                  <th className="text-left py-3 px-4 font-semibold">TX Hash</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((tx) => (
-                  <tr key={tx.id} className="border-b border-border hover:bg-secondary transition-colors">
-                    <td className="py-3 px-4 font-medium">{tx.type}</td>
-                    <td className="py-3 px-4 font-semibold">{tx.amount}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{tx.date}</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                          tx.status === "Completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {tx.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <button className="text-primary hover:underline flex items-center gap-1">
-                        <Copy className="h-3 w-3" />
-                        {tx.txHash}
-                      </button>
-                    </td>
-                  </tr>
+          {txsLoading ? (
+            <div className="space-y-3">
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 px-2 font-semibold">Type</th>
+                      <th className="text-left py-2 px-2 font-semibold">INR Amount</th>
+                      <th className="text-left py-2 px-2 font-semibold">Status</th>
+                      <th className="text-left py-2 px-2 font-semibold">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={i} className="border-b border-border">
+                        <td className="py-3 px-2"><Skeleton className="h-5 w-20" /></td>
+                        <td className="py-3 px-2"><Skeleton className="h-5 w-24" /></td>
+                        <td className="py-3 px-2"><Skeleton className="h-5 w-24 rounded-full" /></td>
+                        <td className="py-3 px-2"><Skeleton className="h-5 w-28" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="md:hidden space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="border border-border rounded p-3">
+                    <Skeleton className="h-5 w-40 mb-2" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 px-2 font-semibold">Type</th>
+                      <th className="text-left py-2 px-2 font-semibold">INR Amount</th>
+                      <th className="text-left py-2 px-2 font-semibold">Status</th>
+                      <th className="text-left py-2 px-2 font-semibold">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {txs.map((t) => (
+                      <tr key={t.id} className="border-b border-border hover:bg-secondary transition-colors">
+                        <td className="py-3 px-2">{t.type}</td>
+                        <td className="py-3 px-2 font-semibold">₹{Number(t.inrAmount ?? 0).toLocaleString()}</td>
+                        <td className="py-3 px-2">
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                            t.status === "COMPLETED" ? "bg-green-100 text-green-800" :
+                            t.status === "PROCESSING" ? "bg-yellow-100 text-yellow-800" :
+                            t.status === "FAILED" ? "bg-red-100 text-red-800" : "bg-muted text-muted-foreground"
+                          }`}>{t.status}</span>
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground">{new Date(t.createdAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="md:hidden space-y-3">
+                {txs.map((t) => (
+                  <div key={t.id} className="border border-border rounded p-3">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="font-medium">{t.type}</p>
+                        <p className="text-xs text-muted-foreground">Date: {new Date(t.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">₹{Number(t.inrAmount ?? 0).toLocaleString()}</p>
+                        <p className="text-xs"><span className="px-2 py-1 rounded-full bg-muted text-muted-foreground text-xs">{t.status}</span></p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* transactions pagination */}
+              <div className="flex justify-center gap-2 mt-3">
+                {Array.from({ length: txsTotalPages }).map((_, i) => (
+                  <button key={i+1} onClick={() => setTxsPage(i+1)} className={`px-3 py-1 rounded ${txsPage === i+1 ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{i+1}</button>
+                ))}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
+
+      <div>
+        <Link href="/admin/users" className="text-sm text-muted-foreground">Back to users</Link>
+      </div>
     </div>
   )
 }

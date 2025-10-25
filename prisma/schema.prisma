@@ -24,6 +24,10 @@ model User {
   password      String?
   userId        String?    @unique
 
+  // new fields
+  phone         String?   // optional phone number
+  kycVerified   Boolean   @default(false)
+
   role      Role    @default(USER)
   isBlocked Boolean @default(false)
   isDeleted Boolean @default(false)

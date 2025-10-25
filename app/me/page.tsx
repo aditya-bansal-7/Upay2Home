@@ -9,6 +9,7 @@ import { LanguageToggle } from "@/components/language-toggle"
 import { useLanguage } from "@/lib/language-context"
 import { translations } from "@/lib/translations"
 import { ChevronRight, Clock, FileText, HelpCircle, LogOut } from "lucide-react"
+import { signOut } from "next-auth/react"
 
 export default function MePage() {
   const [isContactOpen, setIsContactOpen] = useState(false)
@@ -62,7 +63,7 @@ export default function MePage() {
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
 
-          <button className="w-full flex items-center justify-between py-3 px-4 hover:bg-muted rounded-lg transition-colors">
+          <button onClick={() => signOut()} className="w-full flex items-center justify-between py-3 px-4 hover:bg-muted rounded-lg transition-colors">
             <div className="flex items-center gap-3">
               <LogOut className="w-5 h-5 text-muted-foreground" />
               <span className="text-foreground font-medium">{t.signOut}</span>

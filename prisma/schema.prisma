@@ -1,0 +1,285 @@
+// prisma/schema.prisma
+// PostgreSQL (recommended). Adjust provider if needed.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/**
+ * -------------------------
+ * Auth.js / NextAuth v5 core
+ * -------------------------
+ * Matches the Prisma Adapter for Auth.js v5.
+ */
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+
+  role      Role    @default(USER)
+  isBlocked Boolean @default(false)
+
+  usdtBalance Decimal @default(0.0) @db.Decimal(38, 18)
+  inrBalance  Decimal @default(0.0) @db.Decimal(38, 2)
+
+  accounts        Account[]
+  sessions        Session[]
+  authenticators  Authenticator[]
+  payoutProfiles  PayoutProfile[]
+  cryptoDeposits  CryptoDeposit[]
+  inrTransactions INRTransaction[]
+
+  // 👇 Add opposite sides for AdminConfig relations
+  adminConfigsCreated AdminConfig[] @relation("AdminConfigCreatedBy")
+  adminConfigsUpdated AdminConfig[] @relation("AdminConfigUpdatedBy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// Optional for WebAuthn support (Auth.js)
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
+
+/**
+ * -------------------------
+ * Admin config
+ * -------------------------
+ * A single row (or scoped rows) an admin can manage:
+ * - USDT->INR conversion rate
+ * - Toggle deposits/payouts
+ * - Fees, limits
+ */
+model AdminConfig {
+  id               String  @id @default(cuid())
+  usdtToInrRate    Decimal @db.Decimal(38, 6)
+  depositFeeBps    Int     @default(0)
+  withdrawFeeBps   Int     @default(0)
+  minDepositUSDT   Decimal @default(0.0) @db.Decimal(38, 18)
+  minWithdrawINR   Decimal @default(0.0) @db.Decimal(38, 2)
+  allowDeposits    Boolean @default(true)
+  allowWithdrawals Boolean @default(true)
+  notes            String?
+
+  createdById String?
+  updatedById String?
+  createdBy   User?   @relation("AdminConfigCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User?   @relation("AdminConfigUpdatedBy", fields: [updatedById], references: [id])
+
+  // 👇 Add opposite relation for INRTransaction
+  inrTransactions INRTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/**
+ * -------------------------
+ * User payout profiles
+ * -------------------------
+ * Users can store either UPI or Bank info (or both).
+ * Only one active profile of each type can be enforced via unique compound index with isActive if desired.
+ */
+model PayoutProfile {
+  id       String     @id @default(cuid())
+  userId   String
+  type     PayoutType
+  isActive Boolean    @default(true)
+
+  upiVpa        String?
+  accountHolder String?
+  accountNumber String?
+  ifsc          String?
+  bankName      String?
+  branch        String?
+
+  verified         Boolean @default(false)
+  verificationNote String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 👇 Opposite relation for INRTransaction
+  inrTransactions INRTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, type, isActive])
+}
+
+enum PayoutType {
+  UPI
+  BANK
+}
+
+/**
+ * -------------------------
+ * Crypto deposit ledger (USDT)
+ * -------------------------
+ * Tracks only crypto deposits coming from blockchain.
+ * Store chain details to support multi-chain USDT (e.g., ERC20, TRC20).
+ */
+model CryptoDeposit {
+  id          String              @id @default(cuid())
+  userId      String
+  asset       String              @default("USDT")
+  chain       String
+  network     String?
+  txHash      String              @unique
+  fromAddress String
+  toAddress   String
+  amountUSDT  Decimal             @db.Decimal(38, 18)
+  status      CryptoDepositStatus @default(DETECTED)
+
+  confirmations Int       @default(0)
+  detectedAt    DateTime  @default(now())
+  confirmedAt   DateTime?
+  creditedAt    DateTime?
+  failedAt      DateTime?
+  failReason    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 👇 Opposite relation for INRTransaction
+  inrTransactions INRTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([chain, txHash])
+}
+
+enum CryptoDepositStatus {
+  DETECTED
+  CONFIRMED
+  CREDITED
+  FAILED
+}
+
+/**
+ * -------------------------
+ * INR transactions ledger
+ * -------------------------
+ * Tracks fiat side: conversions and withdrawals.
+ * - CONVERT: when user converts USDT → INR at current admin rate; debits USDT balance, credits INR balance
+ * - WITHDRAW: when INR is sent to user's UPI/BANK; debits INR balance
+ */
+model INRTransaction {
+  id            String             @id @default(cuid())
+  userId        String
+  type          INRTransactionType
+  usdtAmount    Decimal?           @db.Decimal(38, 18)
+  inrAmount     Decimal            @db.Decimal(38, 2)
+  effectiveRate Decimal?           @db.Decimal(38, 6)
+  feeInr        Decimal            @default(0.0) @db.Decimal(38, 2)
+
+  relatedDepositId String?
+  payoutProfileId  String?
+  adminConfigId    String?
+
+  status      INRTransactionStatus @default(PENDING)
+  providerRef String?
+  remarks     String?
+
+  executedAt  DateTime?
+  completedAt DateTime?
+  failedAt    DateTime?
+  failReason  String?
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relatedDeposit CryptoDeposit? @relation(fields: [relatedDepositId], references: [id])
+  payoutProfile  PayoutProfile? @relation(fields: [payoutProfileId], references: [id])
+  adminConfig    AdminConfig?   @relation(fields: [adminConfigId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, type, status])
+  @@index([payoutProfileId])
+  @@index([relatedDepositId])
+}
+
+enum INRTransactionType {
+  CONVERT
+  WITHDRAW
+}
+
+enum INRTransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+/**
+ * -------------------------
+ * Balance snapshots and invariants
+ * -------------------------
+ * Optional materialized balance table if you prefer strict ledger-only approach,
+ * but in this design, User.usdtBalance and User.inrBalance are maintained atomically in app logic.
+ * For strong accounting, derive balances from CryptoDeposit + INRTransaction in reads or nightly jobs.
+ */

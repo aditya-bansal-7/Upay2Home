@@ -88,56 +88,54 @@ export default function WithdrawalsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Withdrawal Requests</h1>
-        <p className="text-muted-foreground">Manage and process user withdrawal requests</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Withdrawal Requests</h1>
+        <p className="text-sm md:text-base text-muted-foreground">Manage and process user withdrawal requests</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Pending
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
+            <div className="text-xl md:text-2xl font-bold">{stats.pending}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
               Approved
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.approved}</div>
+            <div className="text-xl md:text-2xl font-bold">{stats.approved}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-2">
               <XCircle className="h-4 w-4 text-red-600" />
               Rejected
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.rejected}</div>
+            <div className="text-xl md:text-2xl font-bold">{stats.rejected}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Amount</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Total Amount</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalAmount.toLocaleString()}</div>
+            <div className="text-xl md:text-2xl font-bold">${stats.totalAmount.toLocaleString()}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -149,14 +147,14 @@ export default function WithdrawalsPage() {
                   placeholder="Search by user name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background pl-10 pr-4 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background pl-10 pr-4 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                 />
               </div>
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
             >
               <option>All</option>
               <option>Pending</option>
@@ -167,14 +165,14 @@ export default function WithdrawalsPage() {
         </CardContent>
       </Card>
 
-      {/* Requests Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Requests ({filteredRequests.length})</CardTitle>
-          <CardDescription>Total requests: {withdrawalRequests.length}</CardDescription>
+          <CardTitle className="text-lg md:text-xl">Requests ({filteredRequests.length})</CardTitle>
+          <CardDescription className="text-xs md:text-sm">Total requests: {withdrawalRequests.length}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
@@ -238,12 +236,63 @@ export default function WithdrawalsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {filteredRequests.map((req) => (
+              <div key={req.id} className="border border-border rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-foreground">{req.user}</p>
+                    <p className="text-xs text-muted-foreground">{req.email}</p>
+                  </div>
+                  <span
+                    className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                      req.status === "Pending"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : req.status === "Approved"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {req.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Amount</p>
+                    <p className="font-semibold">{req.amount}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Method</p>
+                    <p className="font-semibold text-xs">{req.method}</p>
+                  </div>
+                </div>
+                {req.status === "Pending" && (
+                  <div className="flex gap-2 pt-2 border-t border-border">
+                    <button
+                      onClick={() => handleAction(req, "approve")}
+                      className="flex-1 px-3 py-2 rounded-lg bg-green-100 text-green-800 hover:bg-green-200 transition-colors text-xs font-semibold"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleAction(req, "reject")}
+                      className="flex-1 px-3 py-2 rounded-lg bg-red-100 text-red-800 hover:bg-red-200 transition-colors text-xs font-semibold"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
       {/* Action Modal */}
       {showModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle>{action === "approve" ? "Approve Withdrawal" : "Reject Withdrawal"}</CardTitle>
@@ -262,7 +311,7 @@ export default function WithdrawalsPage() {
                   <label className="text-sm font-medium">Reason (optional)</label>
                   <textarea
                     placeholder="Enter reason for rejection..."
-                    className="w-full mt-2 rounded-lg border border-border bg-background p-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full mt-2 rounded-lg border border-border bg-background p-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                     rows={3}
                   />
                 </div>
@@ -270,7 +319,7 @@ export default function WithdrawalsPage() {
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 rounded-lg border border-border px-4 py-2 text-foreground hover:bg-secondary transition-colors"
+                  className="flex-1 rounded-lg border border-border px-4 py-2 text-foreground hover:bg-secondary transition-colors text-sm"
                 >
                   Cancel
                 </button>
@@ -279,7 +328,7 @@ export default function WithdrawalsPage() {
                     setShowModal(false)
                     alert(`Withdrawal ${action === "approve" ? "approved" : "rejected"}`)
                   }}
-                  className={`flex-1 rounded-lg px-4 py-2 text-white font-semibold transition-colors ${
+                  className={`flex-1 rounded-lg px-4 py-2 text-white font-semibold transition-colors text-sm ${
                     action === "approve" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
                   }`}
                 >

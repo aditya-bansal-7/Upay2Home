@@ -50,22 +50,21 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's your platform overview.</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-sm md:text-base text-muted-foreground">Welcome back! Here's your platform overview.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
         {dashboardStats.map((stat, index) => {
           const Icon = stat.icon
           return (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+                <CardTitle className="text-xs md:text-sm font-medium">{stat.label}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-xl md:text-2xl font-bold">{stat.value}</div>
                 <p className="text-xs text-muted-foreground">{stat.change} from last month</p>
               </CardContent>
             </Card>
@@ -73,19 +72,18 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Revenue & Users</CardTitle>
-            <CardDescription>Monthly revenue and user growth</CardDescription>
+            <CardTitle className="text-lg md:text-xl">Revenue & Users</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Monthly revenue and user growth</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="revenue" stroke="#000000" name="Revenue ($)" />
@@ -97,18 +95,18 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>User Status</CardTitle>
-            <CardDescription>Distribution of users</CardDescription>
+            <CardTitle className="text-lg md:text-xl">User Status</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Distribution of users</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={userDistribution}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
+                  innerRadius={40}
+                  outerRadius={80}
                   paddingAngle={2}
                   dataKey="value"
                 >
@@ -123,33 +121,32 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Recent Transactions */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-          <CardDescription>Latest platform transactions</CardDescription>
+          <CardTitle className="text-lg md:text-xl">Recent Transactions</CardTitle>
+          <CardDescription className="text-xs md:text-sm">Latest platform transactions</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs md:text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-2 px-4 font-semibold">User</th>
-                  <th className="text-left py-2 px-4 font-semibold">Type</th>
-                  <th className="text-left py-2 px-4 font-semibold">Amount</th>
-                  <th className="text-left py-2 px-4 font-semibold">Status</th>
-                  <th className="text-left py-2 px-4 font-semibold">Date</th>
+                  <th className="text-left py-2 px-2 md:px-4 font-semibold">User</th>
+                  <th className="text-left py-2 px-2 md:px-4 font-semibold">Type</th>
+                  <th className="text-left py-2 px-2 md:px-4 font-semibold">Amount</th>
+                  <th className="text-left py-2 px-2 md:px-4 font-semibold">Status</th>
+                  <th className="text-left py-2 px-2 md:px-4 font-semibold">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {recentTransactions.map((tx) => (
                   <tr key={tx.id} className="border-b border-border hover:bg-secondary transition-colors">
-                    <td className="py-3 px-4">{tx.user}</td>
-                    <td className="py-3 px-4">{tx.type}</td>
-                    <td className="py-3 px-4 font-semibold">{tx.amount}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-2 md:px-4">{tx.user}</td>
+                    <td className="py-3 px-2 md:px-4">{tx.type}</td>
+                    <td className="py-3 px-2 md:px-4 font-semibold">{tx.amount}</td>
+                    <td className="py-3 px-2 md:px-4">
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                        className={`inline-block px-2 md:px-3 py-1 rounded-full text-xs font-semibold ${
                           tx.status === "Completed"
                             ? "bg-green-100 text-green-800"
                             : tx.status === "Pending"
@@ -160,7 +157,7 @@ export default function AdminDashboard() {
                         {tx.status}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground">{tx.date}</td>
+                    <td className="py-3 px-2 md:px-4 text-muted-foreground">{tx.date}</td>
                   </tr>
                 ))}
               </tbody>

@@ -96,21 +96,20 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">User Management</h1>
-          <p className="text-muted-foreground">Manage and monitor all platform users</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">User Management</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Manage and monitor all platform users</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:opacity-90 transition-opacity w-full md:w-auto justify-center md:justify-start"
         >
           <Plus className="h-5 w-5" />
           Add User
         </button>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -122,14 +121,14 @@ export default function UsersPage() {
                   placeholder="Search by name, email, or phone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background pl-10 pr-4 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background pl-10 pr-4 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                 />
               </div>
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
             >
               <option>All</option>
               <option>Active</option>
@@ -140,14 +139,14 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Users ({filteredUsers.length})</CardTitle>
-          <CardDescription>Total users: {sampleUsers.length}</CardDescription>
+          <CardTitle className="text-lg md:text-xl">Users ({filteredUsers.length})</CardTitle>
+          <CardDescription className="text-xs md:text-sm">Total users: {sampleUsers.length}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
@@ -202,6 +201,58 @@ export default function UsersPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {filteredUsers.map((user) => (
+              <div key={user.id} className="border border-border rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-foreground">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <span
+                    className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                      user.status === "Active"
+                        ? "bg-green-100 text-green-800"
+                        : user.status === "Inactive"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {user.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Phone</p>
+                    <p className="font-medium">{user.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Balance</p>
+                    <p className="font-medium">{user.balance}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2 border-t border-border">
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    className="flex-1 flex items-center justify-center gap-2 p-2 hover:bg-secondary rounded-lg transition-colors text-sm"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View
+                  </Link>
+                  <button className="flex-1 flex items-center justify-center gap-2 p-2 hover:bg-secondary rounded-lg transition-colors text-sm">
+                    <Edit2 className="h-4 w-4" />
+                    Edit
+                  </button>
+                  <button className="flex-1 flex items-center justify-center gap-2 p-2 hover:bg-red-100 rounded-lg transition-colors text-sm">
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

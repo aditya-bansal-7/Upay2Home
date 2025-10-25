@@ -3,13 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/language-context";
+import { useEffect } from "react";
+
 
 export default function RegisterPage() {
   const router = useRouter();
   const { language } = useLanguage();
 
+  const session = useSession();
+
+  useEffect(() => {
+    if (session?.data?.user) {
+      router.push("/");
+    }
+  },[session]);
   // ✅ Form states
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -52,7 +61,12 @@ export default function RegisterPage() {
       });
 
       if (res.ok) {
-        router.push("/login");
+        signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+        router.push("/");
       } else {
         const data = await res.json().catch(() => null);
         setError(data?.message || "Failed to register");
@@ -123,9 +137,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={
-                language === "en"
-                  ? "Enter your email"
-                  : "अपना ईमेल दर्ज करें"
+                language === "en" ? "Enter your email" : "अपना ईमेल दर्ज करें"
               }
               className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
               required
@@ -141,9 +153,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={
-                language === "en"
-                  ? "At least 6 characters"
-                  : "कम से कम 6 वर्ण"
+                language === "en" ? "At least 6 characters" : "कम से कम 6 वर्ण"
               }
               className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
               required
@@ -153,7 +163,9 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              {language === "en" ? "Confirm Password" : "पासवर्ड की पुष्टि करें"}
+              {language === "en"
+                ? "Confirm Password"
+                : "पासवर्ड की पुष्टि करें"}
             </label>
             <input
               type="password"
@@ -187,8 +199,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-primary text-primary-foreground py-2 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
+            className="w-full bg-primary text-primary-foreground py-2 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
             {isLoading
               ? language === "en"
                 ? "Creating account..."
@@ -212,8 +223,7 @@ export default function RegisterPage() {
         <button
           onClick={handleGoogleSignUp}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 border border-input px-4 py-2 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50"
-        >
+          className="w-full flex items-center justify-center gap-2 border border-input px-4 py-2 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50">
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
               fill="currentColor"
@@ -246,8 +256,7 @@ export default function RegisterPage() {
             : "पहले से खाता है? "}
           <Link
             href="/login"
-            className="text-primary font-medium hover:underline"
-          >
+            className="text-primary font-medium hover:underline">
             {language === "en" ? "Sign in" : "साइन इन करें"}
           </Link>
         </p>

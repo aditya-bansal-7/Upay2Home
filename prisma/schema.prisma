@@ -127,6 +127,8 @@ model AdminConfig {
   minWithdrawINR   Decimal @default(0.0) @db.Decimal(38, 2)
   allowDeposits    Boolean @default(true)
   allowWithdrawals Boolean @default(true)
+  bonusRatio       Decimal @default(0.0) @db.Decimal(38, 2)
+  bonusRatioInr    Decimal @default(0.0) @db.Decimal(38, 2)
   notes            String?
 
   createdById String?

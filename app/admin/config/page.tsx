@@ -19,6 +19,8 @@ export default function AdminConfigPage() {
   const [allowDeposits, setAllowDeposits] = useState<boolean>(true)
   const [allowWithdrawals, setAllowWithdrawals] = useState<boolean>(true)
   const [notes, setNotes] = useState<string>("")
+  const [bonusRatio, setBonusRatio] = useState<number>(0)
+  const [bonusRatioInr, setBonusRatioInr] = useState<number>(0)
 
   useEffect(() => {
     let mounted = true
@@ -40,6 +42,8 @@ export default function AdminConfigPage() {
         setAllowDeposits(cfg?.allowDeposits ?? true)
         setAllowWithdrawals(cfg?.allowWithdrawals ?? true)
         setNotes(cfg?.notes ?? "")
+        setBonusRatio(cfg?.bonusRatio ?? 0)
+        setBonusRatioInr(cfg?.bonusRatioInr ?? 0)
       } catch (err: any) {
         setError(err?.message ?? "Failed to load")
       } finally {
@@ -63,6 +67,8 @@ export default function AdminConfigPage() {
         allowDeposits,
         allowWithdrawals,
         notes,
+        bonusRatio,
+        bonusRatioInr,
       }
       const res = await fetch("/api/admin/config", {
         method: "PATCH",
@@ -188,6 +194,26 @@ export default function AdminConfigPage() {
                   {saving ? "Saving..." : "Save"}
                 </button>
                 {error && <div className="text-sm text-red-600">{error}</div>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Currency Ratios</CardTitle>
+            <CardDescription>Ratio </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm">Bonus Ratio</label>
+                  <input type="number" value={bonusRatio} onChange={(e) => setBonusRatio(Number(e.target.value))} className="w-full px-3 py-2 border border-border rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm">Bonus Ratio (INR)</label>
+                  <input type="number" value={bonusRatioInr} onChange={(e) => setBonusRatioInr(Number(e.target.value))} className="w-full px-3 py-2 border border-border rounded" />
+                </div>
               </div>
             </div>
           </CardContent>

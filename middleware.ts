@@ -9,7 +9,6 @@ export default auth((req) => {
     if (!isLoggedIn) {
       return Response.redirect(new URL("/login", req.nextUrl));
     }
-    console.log("isAdminPanel",req.auth?.user );
     const isAdmin = req.auth?.user?.role === "ADMIN";
     if (!isAdmin) {
       return NextResponse.redirect(new URL("/", req.nextUrl));

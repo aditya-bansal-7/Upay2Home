@@ -5,12 +5,15 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, Users, LogOut, Settings, Gift, CreditCard, Menu, X } from "lucide-react"
 import { useState } from "react"
+import { requireAdmin } from "@/lib/auth"
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  await requireAdmin();
+
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 

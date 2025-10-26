@@ -10,6 +10,7 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
     // Use getToken instead of importing full auth.ts (smaller bundle)
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    console.log("Middleware token:", token);
 
     // Check if token exists and has correct role
     if (!token || token.role !== "ADMIN") {

@@ -19,6 +19,7 @@ export const translations = {
     teamCommission: "Team Commission",
     tutorial: "Tutorial",
     howToLink: "How to link to FreeCharge?",
+    loading: "Loading...",
 
     // Me/Profile
     editProfile: "Edit profile",
@@ -99,7 +100,7 @@ export const translations = {
     teamCommission: "टीम कमीशन",
     tutorial: "ट्यूटोरियल",
     howToLink: "FreeCharge से कैसे लिंक करें?",
-
+    loading: "लोड हो रहा है...",
     // Me/Profile
     editProfile: "प्रोफाइल संपादित करें",
     id: "आईडी",

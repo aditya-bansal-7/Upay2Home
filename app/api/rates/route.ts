@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getToken } from "next-auth/jwt"
 
-export async function GET() {
+export async function GET(req: Request) {
   // Get latest config
   const config = await db.adminConfig.findFirst({
     orderBy: { createdAt: "desc" },
@@ -14,10 +14,10 @@ export async function GET() {
   })
 
   // Get user's payout profiles count if logged in
-  const session = await getToken({ req: {} as any, secret: process.env.NEXTAUTH_SECRET })
+  const session = await getToken({ req: req, secret: process.env.NEXTAUTH_SECRET })
   const hasPayoutProfiles = session?.id ? 
     await db.payoutProfile.count({
-      where: { id: session.id }
+      where: { userId: session.id }
     }) > 0 : false
 
   const res = NextResponse.json({

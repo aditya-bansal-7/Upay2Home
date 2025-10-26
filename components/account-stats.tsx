@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { ChevronRight } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 type StatsResponse = {
   totalConversions: number
@@ -56,7 +57,7 @@ export function AccountStats() {
     return (
       <div className="space-y-3">
         <div className="bg-card p-4 rounded-lg border border-border">
-          <p className="text-sm text-muted-foreground">Sign in to view your stats.</p>
+          <p className="text-sm text-muted-foreground"><Link href="/login" className="text-primary hover:underline">Sign in</Link> to view your stats.</p>
         </div>
       </div>
     )

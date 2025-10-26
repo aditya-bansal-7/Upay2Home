@@ -1,24 +1,31 @@
+// middleware.ts
 import { NextResponse } from "next/server";
-import { auth } from "./app/auth";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth;
-  const isAdminPanel = req.nextUrl.pathname.startsWith("/admin") || req.nextUrl.pathname.startsWith("/api/admin/");
-  
-  if (isAdminPanel) {
-    if (!isLoggedIn) {
-      return Response.redirect(new URL("/login", req.nextUrl));
-    }
-    const isAdmin = req.auth?.user?.role === "ADMIN";
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL("/", req.nextUrl));
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Only run for /admin and /api/admin routes
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    // Use getToken instead of importing full auth.ts (smaller bundle)
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+
+    // Check if token exists and has correct role
+    if (!token || token.role !== "ADMIN") {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", req.url);
+      return NextResponse.redirect(loginUrl);
     }
   }
-  
-  return NextResponse.next();
-});
 
-// Optionally cache the response
+  return NextResponse.next();
+}
+
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };

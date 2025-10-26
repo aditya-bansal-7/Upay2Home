@@ -74,7 +74,7 @@ export const GET = adminProtectedRequest(async (req: Request) => {
     {
       label: "Pending Withdrawals",
       value: pendingWithdrawals,
-      valueFormatted: `₹${pendingWithdrawals}`,
+      valueFormatted: `${pendingWithdrawals}`,
       change: formatChange(pendingWithdrawals, prevPendingWithdrawals),
     },
   ];

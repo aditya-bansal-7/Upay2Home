@@ -136,6 +136,9 @@ model AdminConfig {
   createdBy   User?   @relation("AdminConfigCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?   @relation("AdminConfigUpdatedBy", fields: [updatedById], references: [id])
 
+  depositAddress String?
+  qrCode         String?
+
   // 👇 Add opposite relation for INRTransaction
   inrTransactions INRTransaction[]
 

@@ -25,6 +25,8 @@ export const PATCH = adminProtectedRequest(async (req: NextRequest) => {
   if (body.notes !== undefined) payload.notes = body.notes;
   if (body.bonusRatio !== undefined) payload.bonusRatio = Number(body.bonusRatio);
   if (body.bonusRatioInr !== undefined) payload.bonusRatioInr = Number(body.bonusRatioInr);
+  if (body.depositAddress !== undefined) payload.depositAddress = body.depositAddress;
+  if (body.qrCode !== undefined) payload.qrCode = body.qrCode;
 
   // update existing config if present, otherwise create
   const existing = await db.adminConfig.findFirst({ orderBy: { createdAt: "desc" } });
@@ -51,6 +53,7 @@ export const PATCH = adminProtectedRequest(async (req: NextRequest) => {
         bonusRatio: payload.bonusRatio ?? 0,
         bonusRatioInr: payload.bonusRatioInr ?? 0,
         notes: payload.notes ?? null,
+        depositAddress: payload.depositAddress ?? null,
       },
     });
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { QrCode } from "lucide-react"
 
 export default function AdminConfigPage() {
   const [loading, setLoading] = useState(true)
@@ -21,6 +22,8 @@ export default function AdminConfigPage() {
   const [notes, setNotes] = useState<string>("")
   const [bonusRatio, setBonusRatio] = useState<number>(0)
   const [bonusRatioInr, setBonusRatioInr] = useState<number>(0)
+  const [depositAddress, setDepositAddress] = useState<string>("")
+  const [qrValue, setQrValue] = useState<string>("")
 
   useEffect(() => {
     let mounted = true
@@ -44,6 +47,8 @@ export default function AdminConfigPage() {
         setNotes(cfg?.notes ?? "")
         setBonusRatio(cfg?.bonusRatio ?? 0)
         setBonusRatioInr(cfg?.bonusRatioInr ?? 0)
+        setDepositAddress(cfg?.depositAddress ?? "")
+        setQrValue(cfg?.qrCode ?? "")
       } catch (err: any) {
         setError(err?.message ?? "Failed to load")
       } finally {
@@ -69,6 +74,8 @@ export default function AdminConfigPage() {
         notes,
         bonusRatio,
         bonusRatioInr,
+        depositAddress,
+        qrCode: qrValue,
       }
       const res = await fetch("/api/admin/config", {
         method: "PATCH",
@@ -217,6 +224,36 @@ export default function AdminConfigPage() {
               </div>
             </div>
           </CardContent>
+        </Card>
+
+        <Card>  
+          <CardHeader>
+            <CardTitle><div className="flex items-center gap-2 ">
+                  <QrCode size={20} />Deposit Address
+                </div></CardTitle>
+            <CardDescription>Scan QR code to deposit</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-center gap-3">
+                
+                <div className="flex-1">
+                  <label className="block text-sm">Deposit Address</label>
+                  <input type="text" value={depositAddress} onChange={(e) => setDepositAddress(e.target.value)} className="w-full px-3 py-2 border border-border rounded" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm">QR Code </label>
+                  <input type="text" value={qrValue} onChange={(e) => setQrValue(e.target.value)} className="w-full px-3 py-2 border border-border rounded" />
+                </div>
+              </div>
+            </div>
+        
+          </CardContent>
+
         </Card>
       </div>
     </div>

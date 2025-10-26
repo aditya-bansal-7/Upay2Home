@@ -16,5 +16,6 @@ export function adminProtectedRequest(handler: Function) {
 
 export async function isAdminRequest() {
   const session = await auth();
+  console.log("session", session);
   return session?.user?.role === "ADMIN";
 }

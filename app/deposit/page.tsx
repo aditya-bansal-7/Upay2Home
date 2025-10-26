@@ -32,7 +32,7 @@ export default function DepositPage() {
     async function load() {
       try {
         const [configRes, profilesRes] = await Promise.all([
-          fetch("/api/admin/config"),
+          fetch("/api/config"),
           session
             ? fetch("/api/user/payout-profiles?userId=" + session?.user?.id)
             : Promise.resolve(null),

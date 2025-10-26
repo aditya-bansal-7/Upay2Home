@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { LayoutDashboard, Users, LogOut, Settings, Gift, CreditCard, Menu, X } from "lucide-react"
 import { useState } from "react"
 import { requireAdmin } from "@/lib/auth"
+import { signOut } from "next-auth/react"
 
 export default function AdminLayout({
   children,
@@ -68,7 +69,7 @@ export default function AdminLayout({
           })}
         </nav>
         <div className="absolute bottom-6 left-4 right-4">
-          <button className="flex w-full items-center gap-3 rounded-lg px-4 py-2 text-foreground hover:bg-secondary transition-colors">
+          <button onClick={() => signOut()} className="flex w-full items-center gap-3 rounded-lg px-4 py-2 text-foreground hover:bg-secondary transition-colors">
             <LogOut className="h-5 w-5" />
             <span>Logout</span>
           </button>

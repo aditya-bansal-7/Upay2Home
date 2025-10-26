@@ -3,6 +3,10 @@ export const translations = {
     // Header
     donePay: "Upay2Home",
 
+    upi: "UPI",
+    me: "Me",
+    home: "Home",
+
     // Home
     rechargeRewards: "Recharge rewards",
     firstDeposit: "First deposit 99token",
@@ -60,29 +64,43 @@ export const translations = {
     copyAddress: "Copy Address",
     depositHistory: "Deposit History",
 
-    // Team
-    team: "Team",
-    commission: "Commission",
-    teamRecharge: "Team Recharge",
-    inviteCode: "Invite Code",
-    teamDetail: "Team Detail",
+    addNewUPI: "Add New UPI / Bank",
+    enterTransactionHash: "Enter Transaction Hash",
 
-    // Contact
-    telegram: "Telegram",
-    whatsapp: "WhatsApp",
-    email: "Email",
-
-    // Common
-    copy: "Copy",
-    copied: "Copied!",
-    save: "Save",
-    cancel: "Cancel",
-    delete: "Delete",
-    edit: "Edit",
+    // Deposit Steps
+    depositSteps: {
+      address: "Address",
+      amount: "Amount",
+      profile: "Profile",
+      hash: "Hash",
+      confirmation: "Done"
+    },
+    depositTitle: "Deposit Your USDT here",
+    scanToDeposit: "Scan to deposit USDT (TRC20)",
+    enterAmount: "Enter amount",
+    minDeposit: "Min deposit",
+    selectPayoutProfile: "Select Payout Profile",
+    addNewProfile: "Add New UPI / Bank",
+    transactionHash: "Transaction Hash",
+    enterTxHash: "Enter transaction hash",
+    pleaseEnterHash: "Please enter the transaction hash from your wallet",
+    depositSubmitted: "Deposit Submitted!",
+    processingMessage: "Your deposit request is being processed. You will receive {amount} USDT within 5-10 minutes after confirmation.",
+    goToDashboard: "Go to Dashboard",
+    next: "Next",
+    back: "Back",
+    submit: "Submit",
+    pleaseSignIn: "Please sign in to deposit",
+    signIn: "Sign in",
+    register: "Register",
   },
   hi: {
     // Header
     donePay: "उपे2होम",
+
+    upi: "यूपीआई",
+    me: "मैं",
+    home: "होम",
 
     // Home
     rechargeRewards: "रीचार्ज पुरस्कार",
@@ -140,24 +158,34 @@ export const translations = {
     copyAddress: "पता कॉपी करें",
     depositHistory: "जमा इतिहास",
 
-    // Team
-    team: "टीम",
-    commission: "कमीशन",
-    teamRecharge: "टीम रीचार्ज",
-    inviteCode: "आमंत्रण कोड",
-    teamDetail: "टीम विवरण",
+    addNewUPI: "नया यूपीआई / बैंक जोड़ें",
+    enterTransactionHash: "लेन-देन हैश दर्ज करें",
 
-    // Contact
-    telegram: "टेलीग्राम",
-    whatsapp: "व्हाट्सएप",
-    email: "ईमेल",
-
-    // Common
-    copy: "कॉपी",
-    copied: "कॉपी किया गया!",
-    save: "सहेजें",
-    cancel: "रद्द करें",
-    delete: "हटाएं",
-    edit: "संपादित करें",
-  },
+    // Deposit Steps
+    depositSteps: {
+      address: "पता",
+      amount: "राशि",
+      profile: "प्रोफाइल",
+      hash: "हैश",
+      confirmation: "पूर्ण"
+    },
+    depositTitle: "अपना USDT यहाँ जमा करें",
+    scanToDeposit: "USDT जमा करने के लिए स्कैन करें (TRC20)",
+    enterAmount: "राशि दर्ज करें",
+    minDeposit: "न्यूनतम जमा",
+    selectPayoutProfile: "भुगतान प्रोफ़ाइल चुनें",
+    addNewProfile: "नया UPI / बैंक जोड़ें",
+    transactionHash: "लेन-देन हैश",
+    enterTxHash: "लेन-देन हैश दर्ज करें",
+    pleaseEnterHash: "कृपया अपने वॉलेट से लेन-देन हैश दर्ज करें",
+    depositSubmitted: "जमा सबमिट किया गया!",
+    processingMessage: "आपका जमा अनुरोध प्रोसेस किया जा रहा है। पुष्टि के बाद 5-10 मिनट में आपको {amount} USDT प्राप्त होगा।",
+    goToDashboard: "डैशबोर्ड पर जाएं",
+    next: "अगला",
+    back: "वापस",
+    submit: "सबमिट करें",
+    pleaseSignIn: "जमा करने के लिए कृपया साइन इन करें",
+    signIn: "साइन इन करें",
+    register: "रजिस्टर करें",
+  }
 }

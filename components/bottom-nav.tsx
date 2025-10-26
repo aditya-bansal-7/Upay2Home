@@ -3,17 +3,21 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Home, Wallet, CreditCard, Users, User } from "lucide-react"
+import { useLanguage } from "@/lib/language-context"
+import { translations } from "@/lib/translations"
 
-const navItems = [
-  { icon: Home, label: "Home", href: "/" },
-  { icon: Wallet, label: "Deposit", href: "/deposit" },
-  { icon: CreditCard, label: "UPI", href: "/upi" },
-  { icon: Users, label: "Team", href: "/team" },
-  { icon: User, label: "Me", href: "/me" },
+const getNavItems = (t: any) => [
+  { icon: Home, label: t.home ?? "Home", href: "/" },
+  { icon: Wallet, label: t.deposit ?? "Deposit", href: "/deposit" },
+  { icon: CreditCard, label: t.upi ?? "UPI", href: "/upi" },
+  { icon: User, label: t.me ?? "Me", href: "/me" },
 ]
 
 export function BottomNav() {
   const pathname = usePathname()
+  const { language } = useLanguage()
+  const t = translations[language]
+  const navItems = getNavItems(t)
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">
@@ -26,7 +30,6 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center gap-1 py-3 px-4 transition-colors ${
-                /* Changed active color from accent (orange) to black */
                 isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >

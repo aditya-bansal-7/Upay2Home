@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
       qrCode: true,
       telegram: true,
       whatsapp: true,
+      minDepositUSDT: true,
     },
   })
   const res = NextResponse.json({ config: config ?? null })

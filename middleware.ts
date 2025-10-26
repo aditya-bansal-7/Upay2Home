@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
 
     console.log("NextAuth Secret:", process.env.NEXTAUTH_SECRET);
 
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET, secureCookie: process.env.NEXTAUTH_TRUST_HOST === 'true' });
     console.log("Middleware token:", token);
 
     // Check if token exists and has correct role

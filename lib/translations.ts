@@ -57,6 +57,12 @@ export const translations = {
     addUPI: "Add UPI",
     addBank: "Add Bank",
 
+    save: "Save",
+    cancel: "Cancel",
+    delete: "Delete",
+    copied: "Copied",
+    copy: "Copy",
+
     // Deposit
     deposit: "Deposit",
     selectChain: "Select Chain",
@@ -85,7 +91,7 @@ export const translations = {
     enterTxHash: "Enter transaction hash",
     pleaseEnterHash: "Please enter the transaction hash from your wallet",
     depositSubmitted: "Deposit Submitted!",
-    processingMessage: "Your deposit request is being processed. You will receive {amount} USDT within 5-10 minutes after confirmation.",
+    processingMessage: "Your deposit request is being processed. You will receive {amount} INR within 5-10 minutes after confirmation.",
     goToDashboard: "Go to Dashboard",
     next: "Next",
     back: "Back",
@@ -150,6 +156,12 @@ export const translations = {
     bankName: "बैंक का नाम",
     addUPI: "UPI जोड़ें",
     addBank: "बैंक जोड़ें",
+
+    save: "सहेजें",
+    cancel: "रद्द करें",
+    delete: "हटाएं",
+    copied: "कॉपी किया गया",
+    copy: "कॉपी करें",
 
     // Deposit
     deposit: "जमा",

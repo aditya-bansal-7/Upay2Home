@@ -139,6 +139,11 @@ model AdminConfig {
   depositAddress String?
   qrCode         String?
 
+
+  // contact us 
+  telegram String?
+  whatsapp String?
+
   // 👇 Add opposite relation for INRTransaction
   inrTransactions INRTransaction[]
 
@@ -214,7 +219,6 @@ model CryptoDeposit {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // 👇 Opposite relation for INRTransaction
-  inrTransactions INRTransaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -238,6 +242,7 @@ enum CryptoDepositStatus {
  * - CONVERT: when user converts USDT → INR at current admin rate; debits USDT balance, credits INR balance
  * - WITHDRAW: when INR is sent to user's UPI/BANK; debits INR balance
  */
+
 model INRTransaction {
   id            String             @id @default(cuid())
   userId        String
@@ -261,7 +266,6 @@ model INRTransaction {
   failReason  String?
 
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  relatedDeposit CryptoDeposit? @relation(fields: [relatedDepositId], references: [id])
   payoutProfile  PayoutProfile? @relation(fields: [payoutProfileId], references: [id])
   adminConfig    AdminConfig?   @relation(fields: [adminConfigId], references: [id])
 
@@ -280,7 +284,6 @@ enum INRTransactionType {
 
 enum INRTransactionStatus {
   PENDING
-  PROCESSING
   COMPLETED
   FAILED
   CANCELLED

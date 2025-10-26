@@ -335,11 +335,15 @@ export default function DepositPage() {
             <div className="bg-green-50 text-green-800 p-6 rounded-lg">
               <h3 className="text-lg font-medium mb-2">{t.depositSubmitted}</h3>
               <p className="text-sm">
-                {t.processingMessage.replace("{amount}", amount)}
+                {t.processingMessage.replace(
+                  "{amount}",
+                  (adminConfig: any, amount) =>
+                    (Number(adminConfig?.usdtToInrRate) * amount).toString()
+                )}
               </p>
             </div>
             <Link
-              href="/dashboard"
+              href="/"
               className="inline-block px-6 py-3 bg-foreground text-background rounded-lg">
               {t.goToDashboard}
             </Link>

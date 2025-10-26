@@ -13,7 +13,7 @@ export const GET = adminProtectedRequest(async (req: Request) => {
     id: tx.id,
     user: tx.user?.name ?? "Unknown",
     type: tx.type,
-    amount: tx.inrAmount ? `$${tx.inrAmount}` : "-",
+    amount: tx.inrAmount ? `₹${tx.inrAmount}` : "-",
     status: tx.status,
     date: tx.createdAt.toISOString().slice(0, 10),
   }));

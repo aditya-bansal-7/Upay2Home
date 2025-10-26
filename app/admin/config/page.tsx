@@ -24,6 +24,8 @@ export default function AdminConfigPage() {
   const [bonusRatioInr, setBonusRatioInr] = useState<number>(0)
   const [depositAddress, setDepositAddress] = useState<string>("")
   const [qrValue, setQrValue] = useState<string>("")
+  const [telegram, setTelegram] = useState<string>("")
+  const [whatsapp, setWhatsapp] = useState<string>("")
 
   useEffect(() => {
     let mounted = true
@@ -48,7 +50,10 @@ export default function AdminConfigPage() {
         setBonusRatio(cfg?.bonusRatio ?? 0)
         setBonusRatioInr(cfg?.bonusRatioInr ?? 0)
         setDepositAddress(cfg?.depositAddress ?? "")
-        setQrValue(cfg?.qrCode ?? "")
+        setQrValue(cfg?.qrCode ?? "") 
+        setTelegram(cfg?.telegram ?? "")
+        setWhatsapp(cfg?.whatsapp ?? "")
+        
       } catch (err: any) {
         setError(err?.message ?? "Failed to load")
       } finally {
@@ -76,6 +81,8 @@ export default function AdminConfigPage() {
         bonusRatioInr,
         depositAddress,
         qrCode: qrValue,
+        telegram,
+        whatsapp,
       }
       const res = await fetch("/api/admin/config", {
         method: "PATCH",
@@ -254,6 +261,30 @@ export default function AdminConfigPage() {
         
           </CardContent>
 
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact Us</CardTitle>
+            <CardDescription>Contact Us</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-center gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm">Telegram</label>
+                  <input type="text" value={telegram} onChange={(e) => setTelegram(e.target.value)} className="w-full px-3 py-2 border border-border rounded" />
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-center gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm">Whatsapp</label>
+                  <input type="text" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full px-3 py-2 border border-border rounded" />
+                </div>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>

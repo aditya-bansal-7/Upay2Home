@@ -53,12 +53,12 @@ export const GET = adminProtectedRequest(async (req: Request) => {
 
   // Pending withdrawals (current and previous month)
   const pendingWithdrawals = await db.iNRTransaction.count({
-    where: { type: "WITHDRAW", status: { in: ["PENDING", "PROCESSING"] } }
+    where: { type: "WITHDRAW", status: { in: ["PENDING"] } }
   });
   const prevMonthPendingWithdrawals = await db.iNRTransaction.count({
     where: {
       type: "WITHDRAW",
-      status: { in: ["PENDING", "PROCESSING"] },
+      status: { in: ["PENDING"] },
       createdAt: { gte: prevMonthStart, lt: prevMonthEnd }
     }
   });

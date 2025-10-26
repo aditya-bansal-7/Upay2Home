@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { adminProtectedRequest } from "@/lib/admin";
+import { INRTransactionStatus } from "@prisma/client";
 
 // Helper: previous month range
 function getPrevMonthRange() {
@@ -29,21 +30,24 @@ export const GET = adminProtectedRequest(async (req: Request) => {
     where: { isBlocked: false, createdAt: { gte: prevStart, lt: prevEnd } },
   });
 
-  const depositsAgg = await db.cryptoDeposit.aggregate({ _sum: { amountUSDT: true } });
-  const prevDepositsAgg = await db.cryptoDeposit.aggregate({
-    _sum: { amountUSDT: true },
-    where: { createdAt: { gte: prevStart, lt: prevEnd } },
+  const depositsAgg = await db.iNRTransaction.aggregate({
+    _sum: { inrAmount: true },
+    where: { status: INRTransactionStatus.COMPLETED },
+  })
+  const prevDepositsAgg = await db.iNRTransaction.aggregate({
+    _sum: { inrAmount: true },
+    where: { createdAt: { gte: prevStart, lt: prevEnd }, status: INRTransactionStatus.COMPLETED },
   });
-  const totalDeposits = Number(depositsAgg._sum.amountUSDT ?? 0);
-  const prevDeposits = Number(prevDepositsAgg._sum.amountUSDT ?? 0);
+  const totalDeposits = Number(depositsAgg._sum.inrAmount ?? 0);
+  const prevDeposits = Number(prevDepositsAgg._sum.inrAmount ?? 0);
 
   const pendingWithdrawals = await db.iNRTransaction.count({
-    where: { type: "WITHDRAW", status: { in: ["PENDING", "PROCESSING"] } },
+    where: { type: "CONVERT", status: { in: ["PENDING"] } },
   });
   const prevPendingWithdrawals = await db.iNRTransaction.count({
     where: {
-      type: "WITHDRAW",
-      status: { in: ["PENDING", "PROCESSING"] },
+      type: "CONVERT",
+      status: { in: ["PENDING"] },
       createdAt: { gte: prevStart, lt: prevEnd },
     },
   });
@@ -58,7 +62,7 @@ export const GET = adminProtectedRequest(async (req: Request) => {
     {
       label: "Total Deposits",
       value: totalDeposits,
-      valueFormatted: `$${totalDeposits.toLocaleString()}`,
+      valueFormatted: `₹${totalDeposits.toLocaleString()}`,
       change: formatChange(totalDeposits, prevDeposits),
     },
     {
@@ -70,7 +74,7 @@ export const GET = adminProtectedRequest(async (req: Request) => {
     {
       label: "Pending Withdrawals",
       value: pendingWithdrawals,
-      valueFormatted: pendingWithdrawals.toLocaleString(),
+      valueFormatted: `₹${pendingWithdrawals}`,
       change: formatChange(pendingWithdrawals, prevPendingWithdrawals),
     },
   ];

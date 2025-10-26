@@ -23,7 +23,7 @@ export const GET = adminProtectedRequest(async (req: Request) => {
     months.map(async ({ label, start, end }) => {
       const revAgg = await db.iNRTransaction.aggregate({
         _sum: { inrAmount: true },
-        where: { type: "CONVERT", createdAt: { gte: start, lt: end } },
+        where: { type: "CONVERT", status: { in: ["COMPLETED"] }, createdAt: { gte: start, lt: end } },
       });
       const newUsers = await db.user.count({ where: { createdAt: { gte: start, lt: end } } });
       return { month: label, revenue: Number(revAgg._sum.inrAmount ?? 0), users: newUsers };

@@ -8,7 +8,7 @@ import { ContactUsModal } from "@/components/contact-us-modal"
 import { LanguageToggle } from "@/components/language-toggle"
 import { useLanguage } from "@/lib/language-context"
 import { translations } from "@/lib/translations"
-import { ChevronRight, Clock, FileText, HelpCircle, LogOut } from "lucide-react"
+import { ChevronRight, Clock, HelpCircle, LogOut } from "lucide-react"
 import { signOut } from "next-auth/react"
 
 export default function MePage() {
@@ -41,7 +41,7 @@ export default function MePage() {
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </a>
 
-          <a
+          {/* <a
             href="/token-history"
             className="w-full flex items-center justify-between py-3 px-4 hover:bg-muted rounded-lg transition-colors"
           >
@@ -50,7 +50,7 @@ export default function MePage() {
               <span className="text-foreground font-medium">{t.tokenHistory}</span>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </a>
+          </a> */}
 
           <button
             onClick={() => setIsContactOpen(true)}

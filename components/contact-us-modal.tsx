@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { X, MessageCircle, Send } from "lucide-react"
 
 interface ContactUsModalProps {
@@ -7,8 +8,63 @@ interface ContactUsModalProps {
   onClose: () => void
 }
 
+type ContactConfig = {
+  telegram: string | null
+  whatsapp: string | null
+  email: string | null
+}
+
 export function ContactUsModal({ isOpen, onClose }: ContactUsModalProps) {
+  const [cfg, setCfg] = useState<ContactConfig | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    let mounted = true
+    setLoading(true)
+    setError(null)
+    fetch("/api/config", { cache: "no-store" })
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load config")
+        return r.json()
+      })
+      .then((json) => {
+        if (!mounted) return
+        setCfg(json.config ?? { telegram: null, whatsapp: null, email: null })
+      })
+      .catch((e: any) => {
+        if (!mounted) return
+        setError(e.message || "Failed to load config")
+      })
+      .finally(() => {
+        if (!mounted) return
+        setLoading(false)
+      })
+    return () => {
+      mounted = false
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
+
+  const renderRow = (href: string, bg: string, title: string, subtitle: string) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+    >
+      <div className={`w-12 h-12 ${bg} rounded-full flex items-center justify-center`}>
+        <MessageCircle className="w-6 h-6 text-white" />
+      </div>
+      <div className="flex-1">
+        <h3 className="font-semibold text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
+      </div>
+      <Send className="w-5 h-5 text-muted-foreground" />
+    </a>
+  )
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end z-50">
@@ -21,41 +77,40 @@ export function ContactUsModal({ isOpen, onClose }: ContactUsModalProps) {
         </div>
 
         <div className="space-y-3">
-          {/* Telegram */}
-          <a
-            href="https://t.me/bnsl_boy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
-          >
-            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-              <MessageCircle className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground">Telegram</h3>
-              <p className="text-sm text-muted-foreground">Chat with us on Telegram</p>
-            </div>
-            <Send className="w-5 h-5 text-muted-foreground" />
-          </a>
-
-          {/* WhatsApp */}
-          <a
-            href="https://wa.me/919876543210"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
-          >
-            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-              <MessageCircle className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground">WhatsApp</h3>
-              <p className="text-sm text-muted-foreground">Message us on WhatsApp</p>
-            </div>
-            <Send className="w-5 h-5 text-muted-foreground" />
-          </a>
-
-          {/* Email */}
+          {loading ? (
+            <>
+              <div className="h-20 bg-muted rounded-lg animate-pulse" />
+              <div className="h-20 bg-muted rounded-lg animate-pulse" />
+              <div className="h-20 bg-muted rounded-lg animate-pulse" />
+            </>
+          ) : error ? (
+            <div className="text-sm text-red-600">{error}</div>
+          ) : (
+            <>
+              {cfg?.telegram &&
+                renderRow(cfg.telegram, "bg-blue-500", "Telegram", "Chat with us on Telegram")}
+              {cfg?.whatsapp &&
+                renderRow(cfg.whatsapp, "bg-green-500", "WhatsApp", "Message us on WhatsApp")}
+              {cfg?.email && (
+                <a
+                  href={`mailto:${cfg.email}`}
+                  className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+                >
+                  <div className="w-12 h-12 bg-foreground rounded-full flex items-center justify-center">
+                    <span className="text-background font-bold">@</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground">Email</h3>
+                    <p className="text-sm text-muted-foreground">{cfg.email}</p>
+                  </div>
+                  <Send className="w-5 h-5 text-muted-foreground" />
+                </a>
+              )}
+              {!cfg?.telegram && !cfg?.whatsapp && !cfg?.email && (
+                <div className="text-sm text-muted-foreground">No contact options available.</div>
+              )}
+            </>
+          )}
         </div>
 
         <button

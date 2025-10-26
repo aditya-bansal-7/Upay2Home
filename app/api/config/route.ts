@@ -10,6 +10,8 @@ export async function GET(req: NextRequest) {
       bonusRatioInr: true,
       depositAddress: true,
       qrCode: true,
+      telegram: true,
+      whatsapp: true,
     },
   })
   const res = NextResponse.json({ config: config ?? null })

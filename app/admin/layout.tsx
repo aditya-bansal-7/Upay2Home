@@ -19,8 +19,8 @@ export default function AdminLayout({
   const navItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/users", label: "Users", icon: Users },
-    { href: "/admin/withdrawals", label: "Withdrawals", icon: CreditCard },
-    { href: "/admin/referrals", label: "Referrals", icon: Gift },
+    { href: "/admin/withdrawals", label: "Conversions", icon: CreditCard },
+    // { href: "/admin/referrals", label: "Referrals", icon: Gift },
     { href: "/admin/config", label: "Config", icon: Settings },
   ]
 

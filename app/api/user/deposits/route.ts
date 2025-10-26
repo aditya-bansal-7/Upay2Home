@@ -10,26 +10,32 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { amount, txHash, chain, profileId } = body
+    const { amount, txHash, profileId } = body
 
     // Validate inputs
-    if (!amount || !txHash || !chain || !profileId) {
+    if (!amount || !txHash  || !profileId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
+    const adminConfig = await db.adminConfig.findFirst({})
+
+    const inrAmount = Number(adminConfig?.usdtToInrRate) * amount;
+
     // Create deposit record
-    const deposit = await db.cryptoDeposit.create({
+    const deposit = await db.iNRTransaction.create({
       data: {
-        userId: userId,
-        txHash,
-        chain,
-        fromAddress: "unknown", // will be updated when detected on chain
-        toAddress: "platform", // will be updated when detected on chain
-        amountUSDT: amount,
-        status: "DETECTED",
+        userId,
+        type: "CONVERT",
+
+        usdtAmount:amount,
+        inrAmount,
+        effectiveRate: adminConfig?.usdtToInrRate,
+        relatedDepositId: txHash,
+        payoutProfileId: profileId,
+
+        status: "PENDING",
       },
     })
-
     return NextResponse.json({ deposit })
   } catch (error) {
     console.error("Failed to create deposit:", error)

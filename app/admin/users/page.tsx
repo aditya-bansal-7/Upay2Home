@@ -172,7 +172,7 @@ export default function UsersPage() {
                       <th className="text-left py-3 px-4 font-semibold">Email</th>
                       <th className="text-left py-3 px-4 font-semibold">User Id</th>
                       <th className="text-left py-3 px-4 font-semibold">Status</th>
-                      <th className="text-left py-3 px-4 font-semibold">Balance</th>
+                      {/* <th className="text-left py-3 px-4 font-semibold">Balance</th> */}
                       <th className="text-left py-3 px-4 font-semibold">Join Date</th>
                       <th className="text-left py-3 px-4 font-semibold">Actions</th>
                     </tr>
@@ -184,7 +184,7 @@ export default function UsersPage() {
                         <td className="py-3 px-4"><Skeleton className="h-6 w-48" /></td>
                         <td className="py-3 px-4"><Skeleton className="h-6 w-32" /></td>
                         <td className="py-3 px-4"><Skeleton className="h-6 w-24 rounded-full" /></td>
-                        <td className="py-3 px-4"><Skeleton className="h-6 w-20" /></td>
+                        {/* <td className="py-3 px-4"><Skeleton className="h-6 w-20" /></td> */}
                         <td className="py-3 px-4"><Skeleton className="h-6 w-28" /></td>
                         <td className="py-3 px-4"><Skeleton className="h-6 w-32" /></td>
                       </tr>
@@ -228,7 +228,7 @@ export default function UsersPage() {
                       <th className="text-left py-3 px-4 font-semibold">Email</th>
                       <th className="text-left py-3 px-4 font-semibold">User Id</th>
                       <th className="text-left py-3 px-4 font-semibold">Status</th>
-                      <th className="text-left py-3 px-4 font-semibold">Balance</th>
+                      {/* <th className="text-left py-3 px-4 font-semibold">Balance</th> */}
                       <th className="text-left py-3 px-4 font-semibold">Join Date</th>
                       <th className="text-left py-3 px-4 font-semibold">Actions</th>
                     </tr>
@@ -250,7 +250,7 @@ export default function UsersPage() {
                             {user.isBlocked ? "Blocked" : "Active"}
                           </span>
                         </td>
-                        <td className="py-3 px-4 font-semibold">₹{Number(user.inrBalance ?? 0).toLocaleString()}</td>
+                        {/* <td className="py-3 px-4 font-semibold">₹{Number(user.inrBalance ?? 0).toLocaleString()}</td> */}
                         <td className="py-3 px-4 text-muted-foreground">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
@@ -327,10 +327,10 @@ export default function UsersPage() {
                         <p className="text-muted-foreground">UserId</p>
                         <p className="font-medium">{user.userId ?? "—"}</p>
                       </div>
-                      <div>
+                      {/* <div>
                         <p className="text-muted-foreground">Balance</p>
                         <p className="font-medium">₹{Number(user.inrBalance ?? 0).toLocaleString()}</p>
-                      </div>
+                      </div> */}
                     </div>
                     <div className="flex gap-2 pt-2 border-t border-border">
                       <Link

@@ -15,7 +15,12 @@ export async function GET(req: NextRequest) {
       minDepositUSDT: true,
     },
   })
-  const res = NextResponse.json({ config: config ?? null })
-  res.headers.set("Cache-Control", "no-store")
+  const res = NextResponse.json({ config: config ?? null },
+    {
+    headers: {
+      "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
+    },
+  }
+  )
   return res
 }

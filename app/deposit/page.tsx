@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/language-context";
 import { translations } from "@/lib/translations";
 import Link from "next/link";
+import "./deposit.css";
 
 type Step = "address" | "amount" | "profile" | "hash" | "confirmation";
 
@@ -137,11 +138,11 @@ export default function DepositPage() {
       <Header />
       <main className="max-w-md mx-auto px-4 py-6">
         {/* Step indicator */}
-        <div className="flex justify-between items-center mb-8">
-          {Object.entries(t.depositSteps).map(([key, label], i) => (
-            <div key={key} className="flex items-center">
+        <div className="flex items-center justify-between mb-8 overflow-x-auto no-scrollbar px-1">
+          {Object.entries(t.depositSteps).map(([key, label], i, arr) => (
+            <div key={key} className="flex items-center flex-shrink-0">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm md:text-base ${
                   currentStep === key
                     ? "bg-foreground text-background"
                     : [
@@ -163,7 +164,9 @@ export default function DepositPage() {
                 }`}>
                 {i + 1}
               </div>
-              {i < 4 && <div className="h-0.5 w-12 bg-muted mx-2" />}
+              {i < arr.length - 1 && (
+                <div className="h-0.5 w-8 sm:w-10 md:w-12 bg-muted mx-1 sm:mx-2 flex-shrink-0" />
+              )}
             </div>
           ))}
         </div>

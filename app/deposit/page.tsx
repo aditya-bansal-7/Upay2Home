@@ -42,6 +42,7 @@ export default function DepositPage() {
         if (configRes.ok) {
           const configJson = await configRes.json();
           setConfig(configJson.config);
+          setLoading(false);
         }
 
         if (profilesRes?.ok) {

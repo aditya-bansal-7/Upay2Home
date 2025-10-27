@@ -2,8 +2,7 @@
 import { useState, useEffect } from "react";
 import useIsPWA from "@/hooks/useIsPWA";
 import { DownloadApkModal } from "./download-apk-modal";
-import { set } from "zod";
-import { Download, DownloadIcon, HardDriveDownload } from "lucide-react";
+import {  DownloadIcon } from "lucide-react";
 
 export function Header() {
   const isPWA = useIsPWA();
@@ -20,10 +19,6 @@ export function Header() {
     };
     window.addEventListener("beforeinstallprompt", handler as EventListener);
     return () => window.removeEventListener("beforeinstallprompt", handler as EventListener);
-  }, []);
-
-  useEffect(() => {
-    setShowModal(true);
   }, []);
 
   const apkUrl = process.env.NEXT_PUBLIC_APK_URL || "/U PAY 2 HOME.apk";

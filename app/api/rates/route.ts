@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getToken } from "next-auth/jwt"
@@ -23,7 +25,10 @@ export async function GET(req: Request) {
   const res = NextResponse.json({
     rates: config ?? null,
     hasPayoutProfiles,
+  },{
+    headers: {
+      "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
+    },
   })
-  res.headers.set("Cache-Control", "no-store")
   return res
 }

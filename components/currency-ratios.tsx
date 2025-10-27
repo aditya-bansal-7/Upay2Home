@@ -13,7 +13,7 @@ export function CurrencyRatios() {
       try {
         const res = await fetch("/api/config")
         const json = await res.json()
-        setRates(json.rates)
+        setRates(json.config)
       } catch (err) {
         console.error(err)
       } finally {

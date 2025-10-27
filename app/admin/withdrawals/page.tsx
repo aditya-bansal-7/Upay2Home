@@ -514,7 +514,7 @@ export default function WithdrawalsPage() {
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
     <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col">
       {/* Sticky header */}
-      <CardHeader className="flex-shrink-0 border-b border-border">
+      <CardHeader className="shrink-0 border-b border-border">
         <CardTitle>Withdrawal details</CardTitle>
         <CardDescription className="text-xs">
           ID: <span className="font-mono">{viewingId}</span>
@@ -630,7 +630,7 @@ export default function WithdrawalsPage() {
       </CardContent>
 
       {/* Sticky footer */}
-      <div className="px-6 py-4 border-t border-border flex-shrink-0">
+      <div className="px-6 py-4 border-t border-border shrink-0">
         <button
           onClick={() => {
             setViewingId(null)

@@ -30,33 +30,38 @@ export default function DepositPage() {
 
   // Fetch config and profiles
   useEffect(() => {
-    async function load() {
-      try {
-        const [configRes, profilesRes] = await Promise.all([
-          fetch("/api/config"),
-          session
-            ? fetch("/api/user/payout-profiles?userId=" + session?.user?.id)
-            : Promise.resolve(null),
-        ]);
-
-        if (configRes.ok) {
-          const configJson = await configRes.json();
-          setConfig(configJson.config);
-          setLoading(false);
-        }
-
-        if (profilesRes?.ok) {
-          const profilesJson = await profilesRes.json();
-          setProfiles(profilesJson.profiles || []);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const loadConfig = async () => {
+    try {
+      const res = await fetch("/api/config");
+      if (res.ok) {
+        const { config } = await res.json();
+        setConfig(config);
       }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    load();
-  }, [session]);
+  };
+  loadConfig();
+}, []);
+
+useEffect(() => {
+  if (!session?.user?.id) return;
+  const loadProfiles = async () => {
+    try {
+      const res = await fetch(`/api/user/payout-profiles?userId=${session.user.id}`);
+      if (res.ok) {
+        const { profiles } = await res.json();
+        setProfiles(profiles || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  loadProfiles();
+}, [session]);
+
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(config?.depositAddress || "");

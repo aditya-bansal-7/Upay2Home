@@ -18,5 +18,9 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ config: config ?? null });
+  return NextResponse.json({ config: config ?? null },{
+    headers: {
+      "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
+    },
+  });
 }

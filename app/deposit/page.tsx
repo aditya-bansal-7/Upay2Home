@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/header";
 import { BottomNav } from "@/components/bottom-nav";
-import { QRCodeDisplay } from "@/components/qr-code-display";
 import { Copy, Check, ArrowRight, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/language-context";

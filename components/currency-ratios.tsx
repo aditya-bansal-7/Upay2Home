@@ -6,15 +6,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 export function CurrencyRatios() {
   const [loading, setLoading] = useState(true)
   const [rates, setRates] = useState<any>(null)
-  const [hasProfiles, setHasProfiles] = useState(false)
+  const [hasProfiles, setHasProfiles] = useState(true)
 
   useEffect(() => {
     async function fetchRates() {
       try {
-        const res = await fetch("/api/rates")
+        const res = await fetch("/api/config")
         const json = await res.json()
         setRates(json.rates)
-        setHasProfiles(json.hasPayoutProfiles)
       } catch (err) {
         console.error(err)
       } finally {

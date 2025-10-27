@@ -1,3 +1,5 @@
+export const revalidate = 60; 
+
 import { NextRequest, NextResponse } from "next/server"
 import { INRTransactionStatus, INRTransactionType } from "@prisma/client"
 import { db } from "@/lib/db"

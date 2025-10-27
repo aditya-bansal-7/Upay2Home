@@ -42,6 +42,9 @@ model User {
   cryptoDeposits  CryptoDeposit[]
   inrTransactions INRTransaction[]
 
+  totalConversions Decimal @default(0.0) @db.Decimal(38, 2)
+  pendingConversions Decimal @default(0.0) @db.Decimal(38, 2)
+
   // 👇 Add opposite sides for AdminConfig relations
   adminConfigsCreated AdminConfig[] @relation("AdminConfigCreatedBy")
   adminConfigsUpdated AdminConfig[] @relation("AdminConfigUpdatedBy")

@@ -21,7 +21,7 @@ export async function PATCH(
   // Fetch only what’s needed for validation
   const tx = await db.iNRTransaction.findUnique({
     where: { id },
-    select: { status: true, type: true },
+    select: { status: true, type: true, userId: true, inrAmount: true },
   })
   if (!tx) return NextResponse.json({ error: "Not found" }, { status: 404 })
   
@@ -39,6 +39,17 @@ export async function PATCH(
       },
       select: { id: true, status: true, completedAt: true },
     })
+    await db.user.update({
+      where: { id: tx.userId },
+      data: {
+        totalConversions: {
+          increment: tx.inrAmount,
+        },
+        pendingConversions: {
+          decrement: tx.inrAmount,
+        },
+      },
+    })
     return NextResponse.json({ ok: true, item: updated })
   }
 
@@ -52,6 +63,14 @@ export async function PATCH(
         remarks: reason ?? undefined,
       },
       select: { id: true, status: true, failedAt: true },
+    })
+    await db.user.update({
+      where: { id: tx.userId },
+      data: {
+        pendingConversions: {
+          decrement: tx.inrAmount,
+        },
+      },
     })
     return NextResponse.json({ ok: true, item: updated })
   }

@@ -36,6 +36,14 @@ export async function POST(req: NextRequest) {
         status: "PENDING",
       },
     })
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        pendingConversions: {
+          increment: inrAmount,
+        },
+      },
+    })
     return NextResponse.json({ deposit })
   } catch (error) {
     console.error("Failed to create deposit:", error)

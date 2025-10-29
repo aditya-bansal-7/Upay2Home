@@ -76,7 +76,6 @@ model ReferralBonus {
   status          ReferralBonusStatus @default(PENDING)
   remarks         String?
 
-  // 👇 Add relation names to disambiguate
   referrer     User       @relation("UserReferrerRelation", fields: [referrerId], references: [id], onDelete: Cascade)
   referredUser User       @relation("UserReferredRelation", fields: [referredUserId], references: [id], onDelete: Cascade)
 
@@ -250,7 +249,7 @@ model INRTransaction {
   relatedDepositId String?
   payoutProfileId  String?
   adminConfigId    String?
-
+  partialAmount  Decimal?         @db.Decimal(38, 2)
   status      INRTransactionStatus @default(PENDING)
   providerRef String?
   remarks     String?
@@ -282,4 +281,5 @@ enum INRTransactionStatus {
   COMPLETED
   FAILED
   CANCELLED
+  PARTIAL
 }

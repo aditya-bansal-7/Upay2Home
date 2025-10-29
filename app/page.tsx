@@ -15,7 +15,6 @@ export default function Home() {
         <CurrencyRatios />
         <BindUPIButton />
         <AccountStats />
-        <Tutorial />
       </main>
       <BottomNav />
     </div>

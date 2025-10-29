@@ -17,6 +17,7 @@ export async function PATCH(
   const body = await req.json().catch(() => ({}))
   const action: "approve" | "reject" = body.action
   const reason: string | undefined = body.reason
+  const partialAmount: number | undefined = body.partialAmount
 
   // Fetch only what’s needed for validation
   const tx = await db.iNRTransaction.findUnique({
@@ -50,6 +51,38 @@ export async function PATCH(
         },
       },
     })
+    const user = await db.user.findUnique({
+      where: { id: tx.userId },
+    })
+
+    const config = await db.adminConfig.findFirst()
+
+    if (user?.referredById) {
+      await db.referralBonus.create({
+        data: {
+          referrerId: user.referredById,
+          referredUserId: user.id,
+          depositId: updated.id,
+          amountInr: tx.inrAmount,
+          bonusPercent: config?.referralBonusPercent || 0,
+          status: "PENDING",
+        }
+      })
+
+      const refAmount =
+        (Number(tx.inrAmount) * Number(config?.referralBonusPercent || 0)) / 100;
+
+
+      await db.user.update({
+        where: { id: user.referredById },
+        data: {
+          inrBalance: {
+            increment: refAmount
+          },
+        },
+      })
+    }
+
     return NextResponse.json({ ok: true, item: updated })
   }
 
@@ -74,6 +107,36 @@ export async function PATCH(
     })
     return NextResponse.json({ ok: true, item: updated })
   }
+
+  if (action === "partial") {
+    if (!partialAmount || partialAmount <= 0)
+      return NextResponse.json({ error: "Partial amount must be greater than 0" }, { status: 400 })
+
+    if (partialAmount > Number(tx.inrAmount))
+      return NextResponse.json({ error: "Partial amount cannot exceed total withdrawal amount" }, { status: 400 })
+
+    const updated = await db.iNRTransaction.update({
+      where: { id },
+      data: {
+        remarks: reason ?? `Partial payment of ₹${partialAmount}`,
+        partialAmount,
+        inrAmount: Number(tx.inrAmount) - partialAmount,
+        updatedAt: new Date(),
+      },
+      select: { id: true, status: true, remarks: true },
+    })
+
+    await db.user.update({
+      where: { id: tx.userId },
+      data: {
+        pendingConversions: { decrement: partialAmount },
+        totalConversions: { increment: partialAmount },
+      },
+    })
+
+    return NextResponse.json({ ok: true, item: updated })
+  }
+
 
   return NextResponse.json({ error: "Invalid action" }, { status: 400 })
 }

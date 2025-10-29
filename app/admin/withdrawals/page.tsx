@@ -44,7 +44,10 @@ export default function WithdrawalsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<Item | null>(null);
-  const [action, setAction] = useState<"approve" | "reject" | null>(null);
+  const [partialAmount, setPartialAmount] = useState<number | undefined>(undefined);
+  const [action, setAction] = useState<"approve" | "reject" | "partial" | null>(
+    null
+  );
   const [pendingAction, setPendingAction] = useState(false);
 
   const [viewingId, setViewingId] = useState<string | null>(null);
@@ -108,7 +111,10 @@ export default function WithdrawalsPage() {
     fetchList(null);
   };
 
-  const handleAction = (request: Item, actionType: "approve" | "reject") => {
+  const handleAction = (
+    request: Item,
+    actionType: "approve" | "reject" | "partial"
+  ) => {
     setSelectedRequest(request);
     setAction(actionType);
     setShowModal(true);
@@ -123,7 +129,7 @@ export default function WithdrawalsPage() {
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, reason }),
+          body: JSON.stringify({ action, reason, partialAmount }),
         }
       );
       if (!res.ok) throw new Error("Failed to update");
@@ -353,6 +359,11 @@ export default function WithdrawalsPage() {
                                 className="px-3 py-1 rounded-lg bg-muted hover:bg-secondary transition-colors text-xs font-semibold">
                                 View
                               </button>
+                              <button
+                                onClick={() => handleAction(req, "partial")}
+                                className="px-3 py-1 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors text-xs font-semibold">
+                                Partial
+                              </button>
 
                               <button
                                 onClick={() => handleAction(req, "approve")}
@@ -449,6 +460,8 @@ export default function WithdrawalsPage() {
               <CardTitle>
                 {action === "approve"
                   ? "Approve Withdrawal"
+                  : action === "partial"
+                  ? "Partial Payment"
                   : "Reject Withdrawal"}
               </CardTitle>
             </CardHeader>
@@ -481,6 +494,22 @@ export default function WithdrawalsPage() {
                   />
                 </div>
               )}
+              {action === "partial" && (
+                <div>
+                  <label className="text-sm font-medium">
+                    Partial Amount (INR)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Enter partial amount..."
+                    className="w-full mt-2 rounded-lg border border-border bg-background p-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                    onChange={(e) =>
+                    (setPartialAmount(Number(e.target.value)))
+                    }
+                  />
+                </div>
+              )}
+
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => setShowModal(false)}
@@ -494,7 +523,9 @@ export default function WithdrawalsPage() {
                   }
                   className={`flex-1 rounded-lg px-4 py-2 text-white font-semibold transition-colors text-sm ${
                     action === "approve"
-                      ? "bg-green-600 hover:bg-green-700"
+                      ? "bg-green-600 hover:bg-green-700":
+                    action === "partial"
+                      ? "bg-blue-600 hover:bg-blue-700"
                       : "bg-red-600 hover:bg-red-700"
                   }`}
                   disabled={pendingAction}>
@@ -502,161 +533,173 @@ export default function WithdrawalsPage() {
                     ? "Processing..."
                     : action === "approve"
                     ? "Approve"
+                    : action === "partial"
+                    ? "Partial Pay"
                     : "Reject"}
                 </button>
               </div>
             </CardContent>
           </Card>
-          
         </div>
       )}
-     {viewingId && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col">
-      {/* Sticky header */}
-      <CardHeader className="shrink-0 border-b border-border">
-        <CardTitle>Withdrawal details</CardTitle>
-        <CardDescription className="text-xs">
-          ID: <span className="font-mono">{viewingId}</span>
-        </CardDescription>
-      </CardHeader>
+      {viewingId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[85vh] flex flex-col">
+            {/* Sticky header */}
+            <CardHeader className="shrink-0 border-b border-border">
+              <CardTitle>Withdrawal details</CardTitle>
+              <CardDescription className="text-xs">
+                ID: <span className="font-mono">{viewingId}</span>
+              </CardDescription>
+            </CardHeader>
 
-      {/* Scrollable content */}
-      <CardContent className="flex-1 overflow-y-auto px-6 py-4">
-        {viewLoading ? (
-          <div className="space-y-3">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-6 bg-muted rounded animate-pulse" />
-            ))}
-          </div>
-        ) : viewError ? (
-          <div className="text-red-600">{viewError}</div>
-        ) : viewData ? (
-          <div className="space-y-6">
-            <Section title="Transaction">
-              <Field label="Status" value={String(viewData.status)} />
-              <Field
-                label="INR Amount"
-                value={`₹${Number(viewData.inrAmount || 0).toLocaleString("en-IN")}`}
-              />
-              {"usdtAmount" in viewData && viewData.usdtAmount && (
-                <Field
-                  label="USDT Amount"
-                  value={String(viewData.usdtAmount)}
-                />
-              )}
-              {"effectiveRate" in viewData && viewData.effectiveRate && (
-                <Field
-                  label="Effective Rate"
-                  value={String(viewData.effectiveRate)}
-                />
-              )}
-              <Field
-                label="Transaction Hash"
-                value={viewData.relatedDepositId || "-"}
-                mono
-                copyValue={viewData.relatedDepositId || ""}
-              />
-              <Field
-                label="Created At"
-                value={new Date(viewData.createdAt).toLocaleString()}
-              />
-            </Section>
+            {/* Scrollable content */}
+            <CardContent className="flex-1 overflow-y-auto px-6 py-4">
+              {viewLoading ? (
+                <div className="space-y-3">
+                  {[...Array(8)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-6 bg-muted rounded animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : viewError ? (
+                <div className="text-red-600">{viewError}</div>
+              ) : viewData ? (
+                <div className="space-y-6">
+                  <Section title="Transaction">
+                    <Field label="Status" value={String(viewData.status)} />
+                    <Field
+                      label="INR Amount"
+                      value={`₹${Number(viewData.inrAmount || 0).toLocaleString(
+                        "en-IN"
+                      )}`}
+                    />
+                    {"usdtAmount" in viewData && viewData.usdtAmount && (
+                      <Field
+                        label="USDT Amount"
+                        value={String(viewData.usdtAmount)}
+                      />
+                    )}
+                    {"effectiveRate" in viewData && viewData.effectiveRate && (
+                      <Field
+                        label="Effective Rate"
+                        value={String(viewData.effectiveRate)}
+                      />
+                    )}
+                    <Field
+                      label="Transaction Hash"
+                      value={viewData.relatedDepositId || "-"}
+                      mono
+                      copyValue={viewData.relatedDepositId || ""}
+                    />
+                    <Field
+                      label="Created At"
+                      value={new Date(viewData.createdAt).toLocaleString()}
+                    />
+                  </Section>
 
-            <Section title="User">
-              <Field label="Name" value={viewData.user?.name || "-"} />
-              <Field
-                label="Email"
-                value={viewData.user?.email || "-"}
-                mono
-                copyValue={viewData.user?.email || ""}
-              />
-              <Field
-                label="User Since"
-                value={
-                  viewData.user?.createdAt
-                    ? new Date(viewData.user.createdAt).toLocaleString()
-                    : "-"
-                }
-              />
-            </Section>
+                  <Section title="User">
+                    <Field label="Name" value={viewData.user?.name || "-"} />
+                    <Field
+                      label="Email"
+                      value={viewData.user?.email || "-"}
+                      mono
+                      copyValue={viewData.user?.email || ""}
+                    />
+                    <Field
+                      label="User Since"
+                      value={
+                        viewData.user?.createdAt
+                          ? new Date(viewData.user.createdAt).toLocaleString()
+                          : "-"
+                      }
+                    />
+                  </Section>
 
-            <Section title="Payout Profile">
-              <Field
-                label="Type"
-                value={viewData.payoutProfile?.type || "-"}
-              />
-              <Field
-                label="UPI VPA"
-                value={viewData.payoutProfile?.upiVpa || "-"}
-                mono
-                copyValue={viewData.payoutProfile?.upiVpa || ""}
-              />
-              <Field
-                label="Bank"
-                value={viewData.payoutProfile?.bankName || "-"}
-                copyValue={viewData.payoutProfile?.bankName || ""}
-              />
-              <Field
-                label="Account Number"
-                value={
-                  viewData.payoutProfile?.accountNumber
-                }
-                // Copy the full account number, not the masked one
-                mono
-                copyValue={viewData.payoutProfile?.accountNumber || ""}
-              />
-              <Field
-                label="IFSC"
-                value={viewData.payoutProfile?.ifsc || "-"}
-                mono
-                copyValue={viewData.payoutProfile?.ifsc || ""}
-              />
-              <Field
-                label="Branch"
-                value={viewData.payoutProfile?.branch || "-"}
-              />
-              <Field
-                label="Created At"
-                value={
-                  viewData.payoutProfile?.createdAt
-                    ? new Date(viewData.payoutProfile.createdAt).toLocaleString()
-                    : "-"
-                }
-              />
-            </Section>
-          </div>
-        ) : null}
-      </CardContent>
+                  <Section title="Payout Profile">
+                    <Field
+                      label="Type"
+                      value={viewData.payoutProfile?.type || "-"}
+                    />
+                    <Field
+                      label="UPI VPA"
+                      value={viewData.payoutProfile?.upiVpa || "-"}
+                      mono
+                      copyValue={viewData.payoutProfile?.upiVpa || ""}
+                    />
+                    <Field
+                      label="Bank"
+                      value={viewData.payoutProfile?.bankName || "-"}
+                      copyValue={viewData.payoutProfile?.bankName || ""}
+                    />
+                    <Field
+                      label="Account Number"
+                      value={viewData.payoutProfile?.accountNumber}
+                      // Copy the full account number, not the masked one
+                      mono
+                      copyValue={viewData.payoutProfile?.accountNumber || ""}
+                    />
+                    <Field
+                      label="IFSC"
+                      value={viewData.payoutProfile?.ifsc || "-"}
+                      mono
+                      copyValue={viewData.payoutProfile?.ifsc || ""}
+                    />
+                    <Field
+                      label="Branch"
+                      value={viewData.payoutProfile?.branch || "-"}
+                    />
+                    <Field
+                      label="Created At"
+                      value={
+                        viewData.payoutProfile?.createdAt
+                          ? new Date(
+                              viewData.payoutProfile.createdAt
+                            ).toLocaleString()
+                          : "-"
+                      }
+                    />
+                  </Section>
+                </div>
+              ) : null}
+            </CardContent>
 
-      {/* Sticky footer */}
-      <div className="px-6 py-4 border-t border-border shrink-0">
-        <button
-          onClick={() => {
-            setViewingId(null)
-            setViewData(null)
-            setViewError(null)
-          }}
-          className="w-full rounded-lg bg-muted px-4 py-2 text-foreground text-sm hover:bg-secondary transition-colors"
-          disabled={viewLoading}
-        >
-          Close
-        </button>
-      </div>
-    </Card>
-  </div>
-)}
-
+            {/* Sticky footer */}
+            <div className="px-6 py-4 border-t border-border shrink-0">
+              <button
+                onClick={() => {
+                  setViewingId(null);
+                  setViewData(null);
+                  setViewError(null);
+                }}
+                className="w-full rounded-lg bg-muted px-4 py-2 text-foreground text-sm hover:bg-secondary transition-colors"
+                disabled={viewLoading}>
+                Close
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <h3 className="text-sm font-semibold text-foreground mb-2">{title}</h3>
-      <div className="divide-y divide-border border border-border rounded-lg">{children}</div>
+      <div className="divide-y divide-border border border-border rounded-lg">
+        {children}
+      </div>
     </div>
-  )
+  );
 }
 
 function Field({
@@ -665,41 +708,43 @@ function Field({
   mono = false,
   copyValue,
 }: {
-  label: string
-  value: string
-  mono?: boolean
-  copyValue?: string
+  label: string;
+  value: string;
+  mono?: boolean;
+  copyValue?: string;
 }) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
 
   const onCopy = async () => {
-    if (!copyValue) return
+    if (!copyValue) return;
     try {
-      await navigator.clipboard.writeText(copyValue)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1200)
+      await navigator.clipboard.writeText(copyValue);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
     } catch {
       // no-op; could show toast
     }
-  }
+  };
 
   return (
     <div className="flex items-start justify-between gap-4 px-4 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
       <div className="flex items-center gap-2">
-        <p className={`text-xs font-medium text-foreground text-right break-all ${mono ? "font-mono" : ""}`}>
+        <p
+          className={`text-xs font-medium text-foreground text-right break-all ${
+            mono ? "font-mono" : ""
+          }`}>
           {value}
         </p>
         {copyValue ? (
           <button
             onClick={onCopy}
             className="text-xs px-2 py-1 border border-border rounded hover:bg-muted transition-colors"
-            title="Copy"
-          >
+            title="Copy">
             {copied ? "Copied" : "Copy"}
           </button>
         ) : null}
       </div>
     </div>
-  )
+  );
 }

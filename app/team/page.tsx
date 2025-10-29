@@ -26,7 +26,7 @@ export default function TeamPage() {
     fetchTeam()
   }, [])
 
-  const referralLink = `https://www.upay2home.in/register?ref=${session?.user?.userId ?? ""}`
+  const referralLink = `https://www.upay2home.com/register?ref=${session?.user?.userId ?? ""}`
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(referralLink)

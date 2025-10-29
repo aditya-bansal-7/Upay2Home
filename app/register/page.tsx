@@ -1,32 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/language-context";
-import { useEffect } from "react";
-
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { language } = useLanguage();
-
   const session = useSession();
 
+  // ✅ Redirect logged-in users
   useEffect(() => {
-    if (session?.data?.user) {
-      router.push("/");
-    }
-  },[session]);
+    if (session?.data?.user) router.push("/");
+  }, [session]);
+
   // ✅ Form states
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // ✅ Auto-fill referral code from ?ref= query
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) setReferralCode(ref);
+  }, [searchParams]);
 
   // ✅ Handle registration
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -57,21 +62,17 @@ export default function RegisterPage() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, referralCode }),
       });
 
       if (res.ok) {
-        signIn("credentials", {
-          email,
-          password,
-          redirect: false,
-        });
+        signIn("credentials", { email, password, redirect: false });
         router.push("/");
       } else {
         const data = await res.json().catch(() => null);
         setError(data?.message || "Failed to register");
       }
-    } catch (error) {
+    } catch {
       setError("Something went wrong");
     } finally {
       setIsLoading(false);
@@ -83,7 +84,7 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await signIn("google", { callbackUrl: "/" });
-    } catch (error) {
+    } catch {
       setError("Google sign-in failed");
     } finally {
       setIsLoading(false);
@@ -110,6 +111,7 @@ export default function RegisterPage() {
 
         {/* Sign Up Form */}
         <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               {language === "en" ? "Full Name" : "पूरा नाम"}
@@ -128,6 +130,7 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               {language === "en" ? "Email" : "ईमेल"}
@@ -144,6 +147,7 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               {language === "en" ? "Password" : "पासवर्ड"}
@@ -161,6 +165,7 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* Confirm Password */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               {language === "en"
@@ -181,6 +186,25 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* Referral Code (optional) */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {language === "en" ? "Referral Code (optional)" : "रेफरल कोड (वैकल्पिक)"}
+            </label>
+            <input
+              type="text"
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value)}
+              placeholder={
+                language === "en"
+                  ? "Enter referral code (if any)"
+                  : "रेफरल कोड दर्ज करें (यदि कोई हो)"
+              }
+              className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+            />
+          </div>
+
+          {/* Terms */}
           <div className="flex items-start gap-2">
             <input
               type="checkbox"
@@ -196,10 +220,12 @@ export default function RegisterPage() {
             </label>
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-primary text-primary-foreground py-2 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
+            className="w-full bg-primary text-primary-foreground py-2 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+          >
             {isLoading
               ? language === "en"
                 ? "Creating account..."
@@ -223,7 +249,8 @@ export default function RegisterPage() {
         <button
           onClick={handleGoogleSignUp}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 border border-input px-4 py-2 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50">
+          className="w-full flex items-center justify-center gap-2 border border-input px-4 py-2 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50"
+        >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
               fill="currentColor"
@@ -254,9 +281,7 @@ export default function RegisterPage() {
           {language === "en"
             ? "Already have an account? "
             : "पहले से खाता है? "}
-          <Link
-            href="/login"
-            className="text-primary font-medium hover:underline">
+          <Link href="/login" className="text-primary font-medium hover:underline">
             {language === "en" ? "Sign in" : "साइन इन करें"}
           </Link>
         </p>

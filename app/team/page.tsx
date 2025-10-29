@@ -1,8 +1,39 @@
+"use client"
+
 import { Header } from "@/components/header"
 import { BottomNav } from "@/components/bottom-nav"
 import { Copy, Users } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { useEffect, useState } from "react"
 
 export default function TeamPage() {
+  const { data: session } = useSession()
+  const [referrals, setReferrals] = useState<any[]>([])
+  const [totalCommission, setTotalCommission] = useState(0)
+  const [teamRecharge, setTeamRecharge] = useState(0)
+  const [copySuccess, setCopySuccess] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      const res = await fetch("/api/team?userId=" + session?.user?.userId)
+      if (res.ok) {
+        const data = await res.json()
+        setReferrals(data.referrals)
+        setTotalCommission(data.totalCommission)
+        setTeamRecharge(data.teamRecharge)
+      }
+    }
+    fetchTeam()
+  }, [])
+
+  const referralLink = `https://www.upay2home.in/register?ref=${session?.user?.userId ?? ""}`
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(referralLink)
+    setCopySuccess("Copied!")
+    setTimeout(() => setCopySuccess(null), 2000)
+  }
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <Header />
@@ -10,21 +41,21 @@ export default function TeamPage() {
         {/* Team Heading */}
         <h2 className="text-2xl font-bold text-foreground mb-6">Team</h2>
 
-        {/* Team Stats Card */}
+        {/* Stats Card */}
         <div className="bg-muted rounded-lg p-6 mb-8">
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
-              <p className="text-4xl font-bold text-foreground">0</p>
+              <p className="text-4xl font-bold text-foreground">{totalCommission}</p>
               <p className="text-sm text-muted-foreground mt-1">Commission</p>
             </div>
             <div>
-              <p className="text-4xl font-bold text-foreground">0</p>
+              <p className="text-4xl font-bold text-foreground">{teamRecharge}</p>
               <p className="text-sm text-muted-foreground mt-1">Team Recharge</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-muted-foreground" />
-            <p className="text-lg font-bold text-foreground">0</p>
+            <p className="text-lg font-bold text-foreground">{referrals.length}</p>
           </div>
         </div>
 
@@ -34,39 +65,43 @@ export default function TeamPage() {
           <div className="flex items-center gap-2 bg-muted rounded-lg p-4">
             <input
               type="text"
-              value="...web.Upay2Home.com/regist?code=0ardonepbdtq"
+              value={referralLink}
               readOnly
               className="flex-1 bg-transparent text-sm text-foreground outline-none"
             />
-            <button className="p-2 hover:bg-background rounded transition-colors">
+            <button onClick={handleCopy} className="p-2 hover:bg-background rounded transition-colors">
               <Copy className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
+          {copySuccess && <p className="text-sm text-green-600 mt-2">{copySuccess}</p>}
         </div>
 
         {/* Team Detail Section */}
-        <div className="mb-8">
-          <h3 className="text-lg font-bold text-foreground mb-4">Team Detail</h3>
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-24 h-24 bg-muted rounded-lg mb-4 flex items-center justify-center">
-              <svg
-                className="w-16 h-16 text-muted-foreground"
-                viewBox="0 0 100 100"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <path d="M30 40 L70 40 Q75 40 75 45 L75 70 Q75 75 70 75 L30 75 Q25 75 25 70 L25 45 Q25 40 30 40" />
-                <path d="M75 50 L85 50 Q90 50 90 55 L90 65 Q90 70 85 70 L75 70" />
-                <circle cx="82" cy="60" r="3" fill="currentColor" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <div>
+          <h3 className="text-lg font-bold text-foreground mb-4">Team Members</h3>
 
-        {/* Scroll Indicator */}
-        <div className="flex justify-center mb-4">
-          <div className="w-1 h-16 bg-muted rounded-full"></div>
+          {referrals.length === 0 ? (
+            <div className="text-center text-muted-foreground py-12">
+              No team members yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {referrals.map((member) => (
+                <div
+                  key={member.id}
+                  className="flex justify-between items-center bg-muted rounded-lg p-3"
+                >
+                  <div>
+                    <p className="font-medium text-foreground">{member.name}</p>
+                    <p className="text-sm text-muted-foreground">{member.email}</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(member.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
       <BottomNav />

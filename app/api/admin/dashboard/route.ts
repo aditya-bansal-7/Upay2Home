@@ -41,11 +41,11 @@ export const GET = adminProtectedRequest(async (req: Request) => {
   });
 
   // Total deposits (current and previous month)
-  const totalDeposits = await db.cryptoDeposit.aggregate({
-    _sum: { amountUSDT: true }
+  const totalDeposits = await db.iNRTransaction.aggregate({
+    _sum: { inrAmount: true }
   });
-  const prevMonthDeposits = await db.cryptoDeposit.aggregate({
-    _sum: { amountUSDT: true },
+  const prevMonthDeposits = await db.iNRTransaction.aggregate({
+    _sum: { inrAmount: true },
     where: {
       createdAt: { gte: prevMonthStart, lt: prevMonthEnd }
     }
@@ -111,8 +111,8 @@ export const GET = adminProtectedRequest(async (req: Request) => {
     },
     {
       label: "Total Deposits",
-      value: `$${(totalDeposits._sum.amountUSDT ?? 0).toLocaleString()}`,
-      change: `${percentChange(Number(totalDeposits._sum.amountUSDT ?? 0), Number(prevMonthDeposits._sum.amountUSDT ?? 0)).toFixed(1)}%`
+      value: `$${(totalDeposits._sum.inrAmount ?? 0).toLocaleString()}`,
+      change: `${percentChange(Number(totalDeposits._sum.inrAmount ?? 0), Number(prevMonthDeposits._sum.inrAmount ?? 0)).toFixed(1)}%`
     },
     {
       label: "Active Users",

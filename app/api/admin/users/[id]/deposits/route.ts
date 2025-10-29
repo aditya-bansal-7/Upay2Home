@@ -27,29 +27,13 @@ export const GET = adminProtectedRequest(async (req: Request, ctx: { params: Pro
   const where = status ? { ...whereBase, status } : whereBase;
 
   const [items, total] = await Promise.all([
-    db.cryptoDeposit.findMany({
+    db.iNRTransaction.findMany({
       where,
-      orderBy: { detectedAt: "desc" },
+      orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      select: {
-        id: true,
-        txHash: true,
-        chain: true,
-        network: true,
-        fromAddress: true,
-        toAddress: true,
-        amountUSDT: true,
-        status: true,
-        confirmations: true,
-        detectedAt: true,
-        confirmedAt: true,
-        creditedAt: true,
-        failedAt: true,
-        failReason: true,
-      },
     }),
-    db.cryptoDeposit.count({ where }),
+    db.iNRTransaction.count({ where }),
   ]);
 
   const res = NextResponse.json({

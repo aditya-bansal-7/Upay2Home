@@ -22,10 +22,9 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
-  userId        String?    @unique
+  userId        String?   @unique
 
-  // new fields
-  phone         String?   // optional phone number
+  phone         String?
   kycVerified   Boolean   @default(false)
 
   role      Role    @default(USER)
@@ -39,24 +38,59 @@ model User {
   sessions        Session[]
   authenticators  Authenticator[]
   payoutProfiles  PayoutProfile[]
-  cryptoDeposits  CryptoDeposit[]
   inrTransactions INRTransaction[]
 
-  totalConversions Decimal @default(0.0) @db.Decimal(38, 2)
-  pendingConversions Decimal @default(0.0) @db.Decimal(38, 2)
+  totalConversions     Decimal @default(0.0) @db.Decimal(38, 2)
+  pendingConversions   Decimal @default(0.0) @db.Decimal(38, 2)
 
-  // 👇 Add opposite sides for AdminConfig relations
   adminConfigsCreated AdminConfig[] @relation("AdminConfigCreatedBy")
   adminConfigsUpdated AdminConfig[] @relation("AdminConfigUpdatedBy")
+
+  // 👇 Referral system
+  referredById String?
+  referredBy   User? @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals    User[] @relation("UserReferrals")
+
+  // 👇 Add proper names for both sides of the relation
+  referralBonusesEarned   ReferralBonus[] @relation("UserReferrerRelation")
+  referralBonusesReceived ReferralBonus[] @relation("UserReferredRelation")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+
 enum Role {
   USER
   ADMIN
 }
+
+model ReferralBonus {
+  id              String   @id @default(cuid())
+  referrerId      String
+  referredUserId  String
+  depositId       String? 
+  amountInr       Decimal  @db.Decimal(38, 2)
+  bonusPercent    Decimal  @db.Decimal(5, 2)
+
+  status          ReferralBonusStatus @default(PENDING)
+  remarks         String?
+
+  // 👇 Add relation names to disambiguate
+  referrer     User       @relation("UserReferrerRelation", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUser User       @relation("UserReferredRelation", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  creditedAt DateTime?
+}
+
+
+enum ReferralBonusStatus {
+  PENDING
+  CREDITED
+  CANCELLED
+}
+
 
 model Account {
   userId            String
@@ -150,6 +184,8 @@ model AdminConfig {
   // 👇 Add opposite relation for INRTransaction
   inrTransactions INRTransaction[]
 
+  referralBonusPercent Decimal @default(1.0) @db.Decimal(5, 2)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -191,50 +227,6 @@ model PayoutProfile {
 enum PayoutType {
   UPI
   BANK
-}
-
-/**
- * -------------------------
- * Crypto deposit ledger (USDT)
- * -------------------------
- * Tracks only crypto deposits coming from blockchain.
- * Store chain details to support multi-chain USDT (e.g., ERC20, TRC20).
- */
-model CryptoDeposit {
-  id          String              @id @default(cuid())
-  userId      String
-  asset       String              @default("USDT")
-  chain       String
-  network     String?
-  txHash      String              @unique
-  fromAddress String
-  toAddress   String
-  amountUSDT  Decimal             @db.Decimal(38, 18)
-  status      CryptoDepositStatus @default(DETECTED)
-
-  confirmations Int       @default(0)
-  detectedAt    DateTime  @default(now())
-  confirmedAt   DateTime?
-  creditedAt    DateTime?
-  failedAt      DateTime?
-  failReason    String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // 👇 Opposite relation for INRTransaction
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId, status])
-  @@index([chain, txHash])
-}
-
-enum CryptoDepositStatus {
-  DETECTED
-  CONFIRMED
-  CREDITED
-  FAILED
 }
 
 /**
@@ -291,12 +283,3 @@ enum INRTransactionStatus {
   FAILED
   CANCELLED
 }
-
-/**
- * -------------------------
- * Balance snapshots and invariants
- * -------------------------
- * Optional materialized balance table if you prefer strict ledger-only approach,
- * but in this design, User.usdtBalance and User.inrBalance are maintained atomically in app logic.
- * For strong accounting, derive balances from CryptoDeposit + INRTransaction in reads or nightly jobs.
- */

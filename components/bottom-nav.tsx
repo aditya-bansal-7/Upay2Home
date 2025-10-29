@@ -10,6 +10,7 @@ const getNavItems = (t: any) => [
   { icon: Home, label: t.home ?? "Home", href: "/" },
   { icon: Wallet, label: t.deposit ?? "Deposit", href: "/deposit" },
   { icon: CreditCard, label: t.upi ?? "UPI", href: "/upi" },
+  { icon: Users, label: t.refer ?? "Team", href: "/team" },
   { icon: User, label: t.me ?? "Me", href: "/me" },
 ]
 
